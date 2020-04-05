@@ -1,6 +1,8 @@
 ---
 author: Witalis Domitrz <witekdomitrz@gmail.com>
 title: Combinational Logic Based Language with Algebraic types (clbla)
+header-includes:
+- \usepackage{fullpage}
 ---
 
 # Introduction
