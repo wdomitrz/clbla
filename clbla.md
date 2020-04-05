@@ -196,7 +196,7 @@ If added then the expression `a <*>` would be equivalent to `(<*>) a` where `(<*
 
 Adding build-in `lambda*` that would transform the programme tree as follows:
 
-* $\lambda^* x. F = K F$ if $x$ is not a free value in $F$,
+* $\lambda^* x. F = K F$ if $x$ is not a free variable in $F$,
 * $\lambda^* x.x = I$,
 * $\lambda^* x. F G = S (\lambda^* x. F) (\lambda^* x. G)$.
 
