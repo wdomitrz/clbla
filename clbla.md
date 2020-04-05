@@ -7,7 +7,7 @@ header-includes:
 
 # Introduction
 
-The language is inspired by the [Lambda Calcalculus course](https://www.mimuw.edu.pl/~urzy/Lambda/). It is meant to be purely functional, lazy, point-free language with Haskell-inspired syntax. One could argue that Haskell is not the best language to base on, but this interpreter is written in Haskell and it is the determining factor for the inspiration.
+The language is inspired by [the Lambda Calcalculus course](https://www.mimuw.edu.pl/~urzy/Lambda/). It is meant to be purely functional, lazy, point-free language with Haskell-inspired syntax. One could argue that Haskell is not the best language to base on, but this interpreter is written in Haskell and it is the determining factor for the inspiration.
 
 # Language syntax
 
