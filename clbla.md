@@ -210,6 +210,6 @@ where this whole term is treated as an `<expression>` modified as described befo
 
 Note that this feature has very low priority.
 
-## An expressions with build-in integers
+## An extension with build-in integers
 
-This expression would make the programmes execute much faster due to the existence of specialized, build in CPUs' instructions. This might be the default option.
+This extension would make the programmes execute much faster due to the existence of specialized, build in CPUs' instructions. This might be the default option.
