@@ -1,0 +1,7 @@
+data List a = Next a (List a) | Nil
+
+rev :: List a -> List a
+rev = flip (foldList (b (flip b) Next) id) Nil
+
+foldListL :: (a -> b -> a) -> a -> List b -> a
+foldListL = b c (b (c foldList i) (b (b (c b)) c))

@@ -1,0 +1,4 @@
+data Bool = True | False
+
+iif :: Bool -> a -> a -> a
+iif = c (b c foldBool)

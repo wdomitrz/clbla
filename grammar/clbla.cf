@@ -1,0 +1,55 @@
+entrypoints Programme;
+
+Prog. Programme ::= [Extension] [Import] Env;
+
+separator Extension ";";
+Ext. Extension ::= "{-# LANGUAGE" string "#-}";
+
+terminator Include ";"
+Imp. Import ::= "import" string;
+
+Env. Env ::= [Instruction];
+
+layout toplevel;
+
+terminator Instruction ";";
+rules Instruction ::= TypeDefinition | FunctionDefinition | FunctionDeclaration;
+
+TypeDefinition. TypeDefinition ::= "data" TypeName Parameters "=" AlgebraicTypeBody;
+
+TypeName. TypeName ::= UpperCaseString;
+
+token UpperCaseString (upper (letter | digit | '_' | '\'')*);
+
+Parameters. Parameters ::= [Variable];
+
+terminator Variable "";
+Variable. Variable ::= LowerCaseString;
+
+token LowerCaseString (lower (letter | digit | '_' | '\'' | '*' )*);
+
+AlgebraicTypeBody. AlgebraicTypeBody ::= [AlgebraicTypeBodyElement];
+
+terminator AlgebraicTypeBodyElement "|";
+AlgebraicTypeBodyElement. AlgebraicTypeBodyElement ::= TypeConstructor [Type];
+
+TypeConstructor. TypeConstructor ::= UpperCaseString;
+
+terminator Type "";
+NamedType. Type ::= TypeName Parameters;
+TypeVariable. Type ::= Variable;
+FunctionType. Type ::= Type "->" Type;
+_. Type ::= "(" Type ")";
+
+FunctionDeclaration. FunctionDeclaration ::= Variable "::" Type;
+
+FunctionName. FunctionName ::= Variable;
+
+FunctionDefinition. FunctionDefinition ::= Variable "=" Exp;
+
+Application. Exp ::= Exp Exp;
+_. Exp ::= "(" Exp ")";
+VariableExp. Exp ::= Variable;
+
+comment "--";
+comment "{-" "-}";
