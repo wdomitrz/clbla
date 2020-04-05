@@ -37,7 +37,7 @@ There are no extensions yet. The extensions that might be added in the future ar
 
 ## Imports
 
-To import a module, with is associated with a file `<file name>.clbla` write
+To import a module, which is associated with a file `<file name>.clbla` write
 
 ```clbla
 import <file name>
