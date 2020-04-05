@@ -46,7 +46,7 @@ after the (maybe empty) list of extensions.
 
 This import adds all the variables from environment of the `<file name>.clbla` file to the environment of the current file if there was no such an module imported before and does nothing otherwise.
 
-To use multiple imports write multiple `import <file name>` directives separated by a semicolon (`;`) or in the new line each.
+To use multiple imports write multiple `import <file name>` directives separated by a semicolon (`;`) or in a new line each.
 
 ## Environments
 
