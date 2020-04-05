@@ -52,7 +52,7 @@ To use multiple imports write multiple `import <file name>` directives separated
 
 An environment consists of:
 
-* types declarations,
+* types definitions,
 * functions declarations,
 * functions definitions.
 
@@ -66,7 +66,7 @@ The language allows algebraic and functional types. To construct an functional t
 
 There is exactly one build in type - `Char`. It is build in to make print the results to the screen in more readable way.
 
-### Types declarations
+### Types definitions
 
 Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of typs `c` and `A c b` and `E` with parameter `b` write:
 
