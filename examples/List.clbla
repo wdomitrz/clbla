@@ -1,3 +1,5 @@
+import STD
+
 data List a = Next a (List a) | Nil
 
 rev :: List a -> List a

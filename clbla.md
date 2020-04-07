@@ -23,19 +23,25 @@ Other behaviors might be added in the future and might be enabled using extensio
 
 ## Extensions
 
+Names of extensions must start with a capital letter and contain only letters, digits, underscores (`_`), apostrophes (`'`) and asterisks (`*`).
+
 To use an extension write:
 
 ```clbla
 {-# LANGUAGE <name of the extension> #-}
 ```
 
-replacing `<name of the extension>` with the name of the extension you want to use in the beginning of the file. To use multiple extensions declare the next extension after the previous ones.
+replacing `<name of the extension>` with the name of the extension you want to use in the beginning of the file. To use multiple extensions declare the next extension after the previous ones. Name of the extension should start with a capital letter.
 
 Note that the order of the extensions might be important. The extensions are evaluated in the order in which they are enabled in the file.
 
 There are no extensions yet. The extensions that might be added in the future are described in the [features to be considered](#features-to-be-considered) section.
 
 ## Imports
+
+Names of modules must start with a capital letter and contain only letters, digits, underscores (`_`), apostrophes (`'`) and asterisks (`*`).
+
+Name of the extension must start with a capital letter and contain only letter, digits, underscores (`_`), apostrophes (`'`) and asterisks (`*`).
 
 To import a module, which is associated with a file `<file name>.clbla` write
 
@@ -68,10 +74,10 @@ There is exactly one build in type - `Char`. It is build in to make print the re
 
 ### Types definitions
 
-Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of typs `c` and `A c b` and `E` with parameter `b` write:
+Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of typs `c` and `A b c` and `E` with parameter `b` write:
 
 ```clbla
-data A b c = D c (A c b) | E b
+data A b c = D c (A b c) | E b
 ```
 
 ### Automatically generated eliminators

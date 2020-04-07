@@ -1,0 +1,10 @@
+a = b c where d = e
+
+f = let g = h a in c
+
+
+h = let a :: A
+        b :: c
+        data B = T | F
+        b = z  a a
+    in a b

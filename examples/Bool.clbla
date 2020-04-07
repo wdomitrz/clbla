@@ -1,4 +1,6 @@
+import STD
+
 data Bool = True | False
 
-iif :: Bool -> a -> a -> a
-iif = c (b c foldBool)
+if :: Bool -> a -> a -> a
+if = c (b c foldBool)

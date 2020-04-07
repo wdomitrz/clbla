@@ -1,0 +1,6 @@
+import STD
+
+(<$>) = s
+(.) = b
+const = k
+flip = c
