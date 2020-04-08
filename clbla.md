@@ -114,7 +114,65 @@ Note that:
 foldA = w `b` b elimA `b` s (b `b` c `b` (b b)) foldA
 ```
 
-it is obvious that not every eliminator can be created with fold in an efficient way, but I do conjecture that it can be created with linear slowdown. To demonstrated this result I have created `Nats` module using only folds.
+it is obvious that not every eliminator can be created with fold in an efficient way, it can be created with some slowdown.
+To demonstrated this result I have created `Nats` module using only folds.
+
+##### Proof of the conjecture
+
+For the sake of the simplicity I will focus on this type `data A b c = D c (A b c) | E b`, although this proof if fully general.
+
+First construct a type which will represent object of type `A b c` and of parameters of its constructor.
+
+
+```clbla
+data A' b c = D' (A b c) c (A b c) | E' (A b c) b
+```
+
+Its fold has the type `foldA' :: (A b c -> c -> A b c -> d) -> (A b c -> b -> d) -> A' b c -> d`.  First we can implement function `valueA'` (which takes the value of `A b c` element from `A' b c` element discarding constructor parameter):
+
+```clbla
+valueA' :: A' b c -> A b c
+valueA' = foldA' (k `b` k) k
+```
+
+Now we can implement a `historyA` function which creates `A' b c` element from `A b c`.
+
+```clbla
+historyA :: A b c -> A' b c
+historyA = foldA (c s valueA' `b` s (c c) (b D' `b` b' valueA' `b` D)) (s (c E') E)
+```
+
+And now we get the eliminator in quite straightforward way:
+
+```clbla
+elimA :: (c -> A b c -> d) -> (b -> d) -> A b c -> d
+elimA = c c historyA `b` b b `b` b' k `b` foldA' `b` k
+```
+
+One could evaluate the proof in `clbla` with `FOn` and `NElim` extensions or in `Haskell` by adding:
+
+```clbla
+foldA :: (c -> d -> d) -> (b -> d) -> A b c -> d
+foldA f x (D c a) = f c (foldA f x a)
+foldA _ x (E b) = x b
+
+foldA' :: (A b c -> c -> A b c -> d) -> (A b c -> b -> d) -> A' b c -> d
+foldA' f x (D' a c a') = f a c a'
+foldA' _ x (E' a b) = x a b
+
+k :: a -> b -> a
+k = const
+s :: (a -> b -> c) -> (a -> b) -> a -> c
+s = (<*>)
+b :: (b -> c) -> (a -> b) -> a -> c
+b = s (k s) k -- b = (.)
+c :: (a -> b -> c) -> b -> a -> c
+c = s (b b s) (k k) -- c = flip
+b' :: (a -> b) -> (b -> c) -> a -> c
+b' = c b -- b' = flip (.)
+```
+
+QED
 
 ##### Natural numbers example
 
