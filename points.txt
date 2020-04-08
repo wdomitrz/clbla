@@ -13,7 +13,7 @@ Mój język ma zawierać
 * niestandardowy pomysł:
     * bazowanie na kombinatorach S i K w celu pozbycia się labmda-abstrakcji
     * automatyczne eliminatory i foldy
-        * ciekawą hipotezę - wszystko, co da się napisać eliminatorem da się też foldem z niedużym spowolnieniem
+        * ciekawy dowód/konstrukcję - jak zrobić eliminator z folda (niestety tracąc przy tym na wydajności)
 * konstrukcje where i let in
 * moduły
 * rozszerzenia
