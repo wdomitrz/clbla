@@ -28,7 +28,7 @@ Names of extensions must start with a capital letter and contain only letters, d
 To use an extension write:
 
 ```clbla
-{-# LANGUAGE <name of the extension> #-}
+{# LANGUAGE <name of the extension> #}
 ```
 
 replacing `<name of the extension>` with the name of the extension you want to use in the beginning of the file. To use multiple extensions declare the next extension after the previous ones. Name of the extension should start with a capital letter.
@@ -68,10 +68,6 @@ All declared functions should be defined. The declarations and definitions order
 
 The language allows algebraic and functional types. To construct an functional type use `->`. For example `a -> a` is a type of the identity function.
 
-### Build in type
-
-There is exactly one build in type - `Char`. It is build in to make print the results to the screen in more readable way.
-
 ### Types definitions
 
 Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of typs `c` and `A b c` and `E` with parameter `b` write:
@@ -80,15 +76,28 @@ Each type must have at least one constructor. To define type `A` with parameters
 data A b c = D c (A b c) | E b
 ```
 
-### Automatically generated eliminators
+#### Types constructors
 
-This declaration will automatically generate and eliminator:
+The constructors of types (`D` and `E` in the example above) are treated as a functions from their arguments to that type. For example:
+
+```
+D :: c -> A b c -> A b c
+E :: b -> A b c
+```
+
+#### Infix constructors
+
+One can define an infix constructor. Its name must start with `:` (colon) and follow the rules described in [infix operators](#infix-operators) section.
+
+#### Automatically generated eliminators
+
+The `data A b c = D c (A b c) | E b` declaration will automatically generate and eliminator:
 
 ```clbla
 foldA :: (c -> d -> d) -> (b -> d) -> A b c -> d
 ```
 
-#### Real-life example
+##### Real-life example
 
 Consider a definition of a polymorphic list type:
 
@@ -103,9 +112,9 @@ foldListL :: (a -> b -> a) -> a -> List b -> a
 foldListL = b c (b (c foldList i) (b (b (c b)) c))
 ```
 
-using `b` and `c` combinators from the `std` library.
+using `b` and `c` combinators from the `STD` library.
 
-#### Second example
+##### Second example
 
 One might want to use `Bool` type. To do so simply declare:
 
@@ -187,16 +196,49 @@ The expression might be:
 * `let <environment> in <expression>` - the value of this expression is the value of `<expression>` evaluated in the `<environment>` environment.
 * `<expression1> <expression2>` - the value of this expression is the value of application value of the `<expression1>` to the value of `<expression2>`.
 
-# Features to be considered
-
 ## Infix operators
 
-Infix operators:
+An infix operator is either an operator whose name is composed from these `!#$%&*+/<=>?@^|-~:` characters starting with one of these `$?|&<>=:+-*/^!.` characters (base infix operators) or an ordinary function (including type constructors) name surrounded by `\`` (a grave).
 
-* with priorities depending on the name (as in `OCaml`),
-* with priorities specified by the programmer.
+Name starting with `:` are reserved for infix type constructors. Other base infix operators can be defined as an ordinary functions by using `(` `)` (round brackets). For example:
 
-If added then the expression `a <*>` would be equivalent to `(<*>) a` where `(<*>)` is treated as an ordinary function.
+```clbla
+(++) = concat
+```
+
+is a valid function declaration (assuming that `concat` exists in this environment).
+
+All base infix operators can be used as ordinary functions when surrounded by `(` `)` (round brackets). For example:
+
+```clbla
+doubleList = w (++)
+```
+
+The priority is based on the first letter of the infix operator. The list of the operators first characters sorted by the priority:
+
+* `$`
+* `?`
+* `|`
+* `&`
+* `<` or `>` or `=`
+* `:`
+* `+` or `-`
+* `*` or `/`
+* `^`
+* `!` or `.`
+* `\`` (functions surrounded by `\``)
+
+All infix operators have right-to-left associativity by design (because constructors and function composition is more important than `+` and `-`). (Might be changed in the future). Note that it means that `7 - 3 - 1` means `7 - (3 - 1)`.
+
+# Features to be considered
+
+## Infix operators with user-defined priorities
+
+Priorities might be set using special syntax. The syntax tree would be rebuild after parsing.
+
+## Infix operators with user-defined associativity
+
+Associativity might be set using special syntax. The syntax tree would be rebuild after parsing.
 
 ## `Pathetic` extension
 

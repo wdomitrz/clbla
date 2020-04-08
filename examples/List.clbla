@@ -1,9 +1,12 @@
 import STD
 
-data List a = Next a (List a) | Nil
+data List a = a : (List a) | Nil
 
 rev :: List a -> List a
-rev = flip (foldList (b (flip b) Next) id) Nil
+rev = flip (foldList (b (flip b) (:)) id) Nil
 
 foldListL :: (a -> b -> a) -> a -> List b -> a
 foldListL = b c (b (c foldList i) (b (b (c b)) c))
+
+rev' :: List a -> List a
+rev' = foldListL (c (:)) Nil

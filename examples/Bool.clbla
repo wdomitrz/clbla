@@ -4,3 +4,16 @@ data Bool = True | False
 
 if :: Bool -> a -> a -> a
 if = c (b c foldBool)
+
+not :: Bool -> Bool
+not = foldBool False True
+
+and :: Bool -> Bool -> Bool
+and = c foldBool False
+(&&) :: Bool -> Bool -> Bool
+(&&) = and
+
+or :: Bool -> Bool -> Bool
+or = (b not) `b` ((b' not) `b` (and `b` not))
+(||) :: Bool -> Bool -> Bool
+(||) = or

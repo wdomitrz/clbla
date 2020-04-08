@@ -7,7 +7,7 @@ layout stop "in";
 Prog. Programme ::= [Extension] [Import] Environment;
 
 terminator Extension ";";
-Ext. Extension ::= "{-# LANGUAGE" UIdent "#-}";
+Ext. Extension ::= "{# LANGUAGE" UIdent "#}";
 
 terminator Import ";";
 Imp. Import ::= "import" UIdent;
@@ -21,7 +21,8 @@ rules Instruction ::= TypeDefinition | FunctionDeclaration | FunctionDefinition;
 TDef. TypeDefinition ::= "data" UIdent [Parameter] "=" [TypeConstructor];
 
 separator Parameter "";
-Param. Parameter ::= LIdent;
+ParamVar. Parameter ::= LIdent;
+ParamName. Parameter ::= UIdent;
 
 separator nonempty TypeConstructor "|";
 TConst.      TypeConstructor ::= UIdent [Type];
@@ -29,7 +30,7 @@ TInfixConst. TypeConstructor ::= Type TypeInfixConstructorName [Type];
 
 separator Type "";
 TFun.   Type  ::= Type "->" Type1;
-TNamed. Type1 ::= UIdent [Parameter];
+TNamed. Type1 ::= UIdent [Type];
 TVar.   Type2 ::= LIdent;
 _. Type  ::= Type1;
 _. Type1 ::= Type2;
@@ -56,17 +57,17 @@ _. Expression10 ::= Expression11;
 _. Expression11 ::= Expression12;
 _. Expression12 ::= "(" Expression ")";
 
-EOpA. Expression   ::= Expression   InfixFunctionNameA Expression;
-EOpB. Expression1  ::= Expression1  InfixFunctionNameB Expression1;
-EOpC. Expression2  ::= Expression2  InfixFunctionNameC Expression2;
-EOpD. Expression3  ::= Expression3  InfixFunctionNameD Expression3;
-EOpE. Expression4  ::= Expression4  InfixFunctionNameE Expression4;
-EOpF. Expression5  ::= Expression5  InfixFunctionNameF Expression5;
-EOpG. Expression6  ::= Expression6  InfixFunctionNameG Expression6;
-EOpH. Expression7  ::= Expression7  InfixFunctionNameH Expression7;
-EOpI. Expression8  ::= Expression8  InfixFunctionNameI Expression8;
-EOpJ. Expression9  ::= Expression9  InfixFunctionNameJ Expression9;
-EOpK. Expression10 ::= Expression10 InfixFunctionNameK Expression10;
+EOpA. Expression   ::=Expression1  InfixFunctionNameA Expression;
+EOpB. Expression1  ::=Expression2  InfixFunctionNameB Expression1;
+EOpC. Expression2  ::=Expression3  InfixFunctionNameC Expression2;
+EOpD. Expression3  ::=Expression4  InfixFunctionNameD Expression3;
+EOpE. Expression4  ::=Expression5  InfixFunctionNameE Expression4;
+EOpF. Expression5  ::=Expression6  InfixFunctionNameF Expression5;
+EOpG. Expression6  ::=Expression7  InfixFunctionNameG Expression6;
+EOpH. Expression7  ::=Expression8  InfixFunctionNameH Expression7;
+EOpI. Expression8  ::=Expression9  InfixFunctionNameI Expression8;
+EOpJ. Expression9  ::=Expression10 InfixFunctionNameJ Expression9;
+EOpK. Expression10 ::=Expression11 InfixFunctionNameK Expression10;
 
 ELet. Expression1 ::= "let" "{" Environment "}" "in" Expression1;
 EApp. Expression11 ::= Expression11 Expression12;
@@ -81,6 +82,8 @@ FBName. FunctionBaseName ::= LIdent;
 FIBName. FunctionBaseName ::= "(" FunctionInfixName ")";
 FName. FunctionName ::= FunctionBaseName;
 FTCName. FunctionName ::= UIdent;
+FITCName. FunctionName ::= "(" TypeInfixConstructorName ")";
+
 rules FunctionInfixName ::= InfixFunctionNameA
                           | InfixFunctionNameB
                           | InfixFunctionNameC
@@ -101,7 +104,10 @@ token InfixFunctionNameG (('+' | '-') ((["!#$%&*+/<=>?@^|-~:"] | '.')*));
 token InfixFunctionNameH (('*' | '/') ((["!#$%&*+/<=>?@^|-~:"] | '.')*));
 token InfixFunctionNameI (('^') ((["!#$%&*+/<=>?@^|-~:"] | '.')*));
 token InfixFunctionNameJ (('!' | '.') ((["!#$%&*+/<=>?@^|-~:"] | '.')*));
-token InfixFunctionNameK ('`' (lower (letter | digit | '_' | '\'' | '*')*) '`');
+token InfixFunctionNameK ('`' ((lower | upper) (letter | digit | '_' | '\'' | '*')*) '`');
 
 -- Type names
 TIConstName. TypeInfixConstructorName ::= InfixFunctionNameF; -- (':' (':' | InfixNameChar)*)
+
+comment "--" ;
+comment "{-" "-}" ;
