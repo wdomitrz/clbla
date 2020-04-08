@@ -198,7 +198,7 @@ The expression might be:
 
 ## Infix operators
 
-An infix operator is either an operator whose name is composed from these `!#$%&*+/<=>?@^|-~:` characters starting with one of these `$?|&<>=:+-*/^!.` characters (base infix operators) or an ordinary function (including type constructors) name surrounded by `\`` (a grave).
+An infix operator is either an operator whose name is composed from these `!#$%&*+/<=>?@^|-~:` characters starting with one of these `$?|&<>=:+-*/^!.` characters (base infix operators) or an ordinary function (including type constructors) name surrounded by \` (a grave).
 
 Name starting with `:` are reserved for infix type constructors. Other base infix operators can be defined as an ordinary functions by using `(` `)` (round brackets). For example:
 
@@ -226,7 +226,7 @@ The priority is based on the first letter of the infix operator. The list of the
 * `*` or `/`
 * `^`
 * `!` or `.`
-* `\`` (functions surrounded by `\``)
+* \` (functions surrounded by \`)
 
 All infix operators have right-to-left associativity by design (because constructors and function composition is more important than `+` and `-`). (Might be changed in the future). Note that it means that `7 - 3 - 1` means `7 - (3 - 1)`.
 
