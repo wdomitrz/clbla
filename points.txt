@@ -1,0 +1,3 @@
+Mój język ma zawierać typy funkcyjne i polimorficzne z konstruktorami będącymi funkcjami, rekurencyjne funkcje wieloargumentowe wyższego rzędu, pattern matching zawarty w fold-ach, statyczne wiązanie identyfikatorów i typowanie, biblioteczkę standardową, niestandardowy pomysł, konstrukcje where i let in, moduły, rozszerzenia, wielopryiorytetowe operatory infiksowe. Po bardziej szczegółowy opis zachęcam zajżeć do pliku clbla.pdf. Planuję również spróbować zrobić algorytm rekonstrukcji typów.
+
+Na tej podstawie wnioskuję o maksymalny wynik 30 punktów (lub 35 w przypadku zrobienia algorytmu rekonstrukcji typów).
