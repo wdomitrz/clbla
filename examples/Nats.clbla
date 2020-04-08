@@ -1,3 +1,6 @@
+{# LANGUAGE FOn #}
+{# LANGUAGE NElim #}
+
 import STD
 import Bool
 import Pair
@@ -21,6 +24,9 @@ four = S three
 
 -- Predecessor of 0 is 0
 pred :: Nat -> Nat
+-- It is an inefficient implementation, but using only folds. An efficient one
+-- using eliminator:
+-- pred = elimNat i zero
 pred = fstNat . foldNat (s PNats S . sndNat) (PNats Zero Zero)
     where
         -- Hasnell cannot do this
@@ -54,7 +60,9 @@ isZero = foldNat (k False) True
 (/) :: Nat -> Nat -> Nat
 -- Slower version
 -- (/) = s (s `b` c c zero `b` (b if) `b` (<)) ((b S) `b` w `b` (b (/)) `b` (-))
--- Faster version (with accumulated result)
+-- Faster version (with accumulated result) (this implementation is still
+-- inefficient because of usage of (-). It would be efficient if pred was
+-- implemented using eliminator.)
 (/) =
     let go :: Nat -> Nat -> Nat -> Nat
         go = s (s `b` b b `b` c (if `b` isZero))
@@ -72,11 +80,13 @@ factorial = fst `b` foldNat go (Pair one one)
     go = s (Pair `b` lift2 (*) fst snd) (S `b` snd)
 
 fib :: Nat -> Nat
-fib = fst `b` foldNat (foldPair go) (Pair zero one)
+fib = fst `b` foldNat (elimPair go) (Pair zero one)
   where
     go :: Nat -> Nat -> Pair Nat Nat
     go = s Pair `b` (+)
 
+-- This implementation is inefficient but only because of using fold instead of
+-- eliminator in pred implementation.
 ackerman :: Nat -> Nat -> Nat
 ackerman = fst . foldNat go (Pair S one)
   where

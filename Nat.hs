@@ -65,6 +65,10 @@ three = S two
 four :: Nat
 four = S three
 
+elimNat :: (Nat -> a) -> a -> Nat -> a
+elimNat _ x Zero = x
+elimNat f _ (S n) = f n
+
 foldNat :: (a -> a) -> a -> Nat -> a
 foldNat _ x Zero  = x
 foldNat f x (S n) = f (foldNat f x n)
@@ -155,3 +159,6 @@ ackerman = fst . foldNat go (Pair S one)
     go = lift2 Pair go' (S `b` snd)
     go' = s (s `b` c (if' `b` isZero) `b` c fst one)
             (lift2 b fst (b' pred `b` ackerman `b` snd))
+
+pred' :: Nat -> Nat
+pred' = elimNat i Zero

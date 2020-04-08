@@ -1,11 +1,9 @@
-{# LANGUAGE SomeExtension #}
 import STD
 import List
 
 data AlternatingList a b = a :. AlternatingList b a | ANil
--- foldAlternatingList :: (a -> AlternatingList b a -> c) -> c -> AlternatingList a b -> c
 
 everySecond :: AlternatingList a b -> List a
-everySecond = foldAlternatingList ((c (.) go) . (:)) Nil
+everySecond = elimAlternatingList ((c (.) go) . (:)) Nil
     where go :: AlternatingList b a -> List a
-          go = foldAlternatingList (k everySecond) Nil
+          go = elimAlternatingList (k everySecond) Nil

@@ -35,7 +35,14 @@ replacing `<name of the extension>` with the name of the extension you want to u
 
 Note that the order of the extensions might be important. The extensions are evaluated in the order in which they are enabled in the file.
 
-There are no extensions yet. The extensions that might be added in the future are described in the [features to be considered](#features-to-be-considered) section.
+### Already known extensions:
+
+* `FOn` - extension enabling automatically implemented folds
+* `NElim` - extension disabling automatically implemented eliminators
+
+If someone would like to have even more fun during coding, then they might consider using those extensions and implement everything using folds.
+
+The extensions that might be added in the future are described in the [features to be considered](#features-to-be-considered) section.
 
 ## Imports
 
@@ -91,10 +98,37 @@ One can define an infix constructor. Its name must start with `:` (colon) and fo
 
 #### Automatically generated eliminators
 
-The `data A b c = D c (A b c) | E b` declaration will automatically generate and eliminator:
+The `data A b c = D c (A b c) | E b` declaration will automatically generate eliminator and fold (to enable fold use an extension):
 
 ```clbla
+elimA :: (c -> A b c -> d) -> (b -> d) -> A b c -> d
 foldA :: (c -> d -> d) -> (b -> d) -> A b c -> d
+```
+
+Note that:
+
+* eliminator for a non-recursive type is also a fold.
+* fold can be created with an eliminator in an efficient way. For example:
+
+```clbla
+foldA = w `b` b elimA `b` s (b `b` c `b` (b b)) foldA
+```
+
+it is obvious that not every eliminator can be created with fold in an efficient way, but I do conjecture that it can be created with linear slowdown. To demonstrated this result I have created `Nats` module using only folds.
+
+##### Natural numbers example
+
+Consider a definition of natural numbers as in `Nats.clbla`:
+
+```clbla
+data Nat :: S Nat | Zero
+```
+
+then if not disabled one could use the eliminator to create predecessor function (predecessor of 0 is assumed to be 0):
+
+```clbla
+pred :: Nat -> Nat
+pred = elimNat i Zero
 ```
 
 ##### Real-life example

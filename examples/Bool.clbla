@@ -3,13 +3,13 @@ import STD
 data Bool = True | False
 
 if :: Bool -> a -> a -> a
-if = c (b c foldBool)
+if = c (b c elimBool)
 
 not :: Bool -> Bool
-not = foldBool False True
+not = elimBool False True
 
 and :: Bool -> Bool -> Bool
-and = c foldBool False
+and = c elimBool False
 (&&) :: Bool -> Bool -> Bool
 (&&) = and
 

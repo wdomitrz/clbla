@@ -4,7 +4,7 @@ data Pair a b = Pair a b
 (<>) = Pair
 
 fst :: Pair a b -> a
-fst = foldPair k
+fst = elimPair k
 
 snd :: Pair a b -> b
-snd = foldPair (c k)
+snd = elimPair (c k)
