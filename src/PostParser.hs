@@ -13,11 +13,11 @@ procModule name (Abs.Prog exts imps env) = Module
   (fmap (\(Abs.Imp (UIdent imp)) -> imp) imps)
   (procEnv env)
 
-procEnv :: Abs.Environment -> Env
+procEnv :: Abs.Environment -> Defs
 procEnv = go [] [] [] . (\(Abs.Env is) -> is)
  where
-  go :: [TDef] -> [FDecl] -> [FDef] -> [Abs.Instruction] -> Env
-  go tdfs fdcs fdfs [] = Env tdfs fdcs fdfs
+  go :: [TDef] -> [FDecl] -> [FDef] -> [Abs.Instruction] -> Defs
+  go tdfs fdcs fdfs [] = Defs tdfs fdcs fdfs
   go tdfs fdcs fdfs (Abs.InstructionTypeDefinition x : is) =
     go (procTDef x : tdfs) fdcs fdfs is
   go tdfs fdcs fdfs (Abs.InstructionFunctionDeclaration x : is) =
