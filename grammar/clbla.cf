@@ -22,7 +22,6 @@ TDef. TypeDefinition ::= "data" UIdent [Parameter] "=" [TypeConstructor];
 
 separator Parameter "";
 ParamVar. Parameter ::= LIdent;
-ParamName. Parameter ::= UIdent;
 
 separator nonempty TypeConstructor "|";
 TConst.      TypeConstructor ::= UIdent [Type];
