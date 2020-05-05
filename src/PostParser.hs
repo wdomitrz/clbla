@@ -43,7 +43,7 @@ procConstr (Abs.TInfixConst t (Abs.TIConstName (Abs.InfixFunctionNameF name)) ts
 procType :: Abs.Type -> Type
 procType (Abs.TFun   t1            t2) = procType t1 :-> procType t2
 procType (Abs.TNamed (UIdent name) ts) = TNamed name (fmap procType ts)
-procType (Abs.TVar (LIdent name)     ) = TVar name
+procType (Abs.TVar (LIdent name)     ) = TPoly name
 
 procExp :: Abs.Expression -> Exp
 procExp (Abs.ELet env e                      ) = ELet (procEnv env) (procExp e)

@@ -1,23 +1,34 @@
 module Types where
-import           Data.Map
+import           Data.Map                       ( Map )
+import           Data.Set                       ( Set )
 
-data Fun = Fun {fname :: FName, fun :: Exp}
-newtype AType = AType {noParams :: Int}
+-- The [Val] list is reversed in VNamed!
+data Val = VNamed CName [Val] | VFun (Val -> Val)
+data TVal = TVal {onlyType::Type, onlyVal::Val} | NoVal {onlyType:: Type}
+newtype AType = AType {numOfParams :: Int}
+  deriving (Eq, Ord, Show, Read)
 
-data Env = Env {tenv :: Map TName AType, fenv :: Map FName Fun}
+data Res = RObj TName CName [Res] | RFun Type Type
+  deriving (Eq, Ord, Show, Read)
 
-type MName = String -- module name
-type FName = String -- function (variable) name
-type TName = String -- type name
+type TDecls = Map TName AType
+type FDefs = Map FName TVal
+type RawFDefs = Map FName FDef
+data Env = Env {localNames :: Set VName, tenv :: TDecls, fenv :: FDefs}
+
 type VName = String -- type variable name
-type CName = String -- constructor name
+type MName = String -- module name
+type FName = VName -- function (variable) name
+type TName = VName -- type name
+type CName = VName -- constructor name
 type Ext = String -- extension
 type Imp = String -- import
+type TId = Int -- type variable id
 
 data Module = Module MName [Ext] [Imp] Defs
   deriving (Eq, Ord, Show, Read)
 
-data Type = TPolym VName | TVar VName | TNamed TName [Type] | Type :-> Type
+data Type = TPoly VName | TVar TId | TNamed TName [Type] | Type :-> Type
   deriving (Eq, Ord, Show, Read)
 
 data TConstr = TConstr CName [Type]
@@ -29,10 +40,11 @@ data TDef = TDef TName [VName] [TConstr]
 data FDecl = FDecl FName Type
   deriving (Eq, Ord, Show, Read)
 
-data FDef = FDef FName Exp | FDefWh FName Exp Defs
+data FDef = FDef {fname::FName, fexp::Exp}
+          | FDefWh {fname::FName, fexp::Exp, fwhere::Defs}
   deriving (Eq, Ord, Show, Read)
 
-data Defs = Defs {tdefs :: [TDef], fdecls :: [FDecl], fdefs :: [FDef]}
+data Defs = Defs [TDef] [FDecl] [FDef]
   deriving (Eq, Ord, Show, Read)
 
 data Exp = EVar FName | ELet Defs Exp | EApp Exp Exp
