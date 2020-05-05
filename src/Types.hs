@@ -13,7 +13,6 @@ data Res = RObj TName CName [Res] | RFun Type Type
 
 type TDecls = Map TName AType
 type FDefs = Map FName TVal
-type RawFDefs = Map FName FDef
 data Env = Env {localNames :: Set VName, tenv :: TDecls, fenv :: FDefs}
 
 type VName = String -- type variable name

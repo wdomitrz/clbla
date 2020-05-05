@@ -1,6 +1,4 @@
 module Utils where
-import           Control.Monad.Trans.Reader
-import           Control.Monad                  ( foldM )
 import           Data.List                      ( nub )
 import           Data.Foldable                  ( toList )
 

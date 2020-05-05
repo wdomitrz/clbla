@@ -2,9 +2,7 @@ module Error where
 import           Control.Monad.State
 import           Control.Monad.Reader
 import           Control.Monad.Except
-import           Control.Monad.Trans.Except
 import           Types
-import           Data.Map
 
 data InterpreterError =
     ParserError String

@@ -19,7 +19,7 @@ elimPrefix = "elim"
 foldPrefix = "fold"
 
 polyParamsNames :: [String]
-polyParamsNames = liftM2 (flip (:) . show) [1 ..] ['a' .. 'z']
+polyParamsNames = liftM2 (flip (:) . show) ([1 ..] :: [Integer]) ['a' .. 'z']
 getFreeParamName :: [String] -> String
 getFreeParamName = head . (polyParamsNames \\)
 
@@ -53,7 +53,7 @@ typeCheckDefs (Defs tdfs fdcls fdfs) = do
   resetLocalNames
   mapM_ procTDecl tdfs
   mapM_ procTDef  tdfs
-  -- eliminators and folds can be oveloaded
+  -- eliminators and folds can be overloaded
   resetLocalNames
   mapM_ procFDecl     fdcls
   mapM_ typeCheckFDef fdfs
@@ -62,10 +62,10 @@ typeCheckDefs (Defs tdfs fdcls fdfs) = do
 procDefs :: Defs -> InterpreterStateM Env
 procDefs dfs@(Defs _ _ fdfs) = do
   void $ typeCheckDefs dfs
-  procFDefs (Map.fromList $ fmap (\df -> (fname df, df)) fdfs)
+  procFDefs fdfs
 
-procFDefs :: RawFDefs -> InterpreterStateM Env
-procFDefs = undefined
+procFDefs :: [FDef] -> InterpreterStateM Env
+procFDefs fdfs = gets $ getEnv evalDefs fdfs
 
 typeCheckFDefInitial :: FName -> InterpreterStateM Type
 typeCheckFDefInitial name = do
@@ -79,8 +79,8 @@ typeCheckFDefInitial name = do
     NoVal t  -> return t
 
 typeCheckFDefFinalize :: Exp -> Type -> TCState -> InterpreterStateM ()
-typeCheckFDefFinalize exp t tcsState = do
-  t' <- case runReader (runExceptT (typeOfM exp)) tcsState of
+typeCheckFDefFinalize exp' t tcsState = do
+  t' <- case runReader (runExceptT (typeOfM exp')) tcsState of
     Left  e  -> throwE e
     Right t' -> return t'
   case runMgu t t' of
@@ -88,27 +88,25 @@ typeCheckFDefFinalize exp t tcsState = do
     Right _ -> return ()
 
 typeCheckFDef :: FDef -> InterpreterStateM ()
-typeCheckFDef (FDef name exp) = do
-  t     <- typeCheckFDefInitial name
-  state <- get
+typeCheckFDef (FDef name exp') = do
+  t <- typeCheckFDefInitial name
+  s <- get
   typeCheckFDefFinalize
-    exp
+    exp'
     t
-    TCState { tps           = onlyType <$> fenv state
-            , defsProcessor = evalTypeCheckDefs state
-            }
+    TCState { tps = onlyType <$> fenv s, defsProcessor = evalTypeCheckDefs s }
 
-typeCheckFDef (FDefWh name exp wh) = do
-  t      <- typeCheckFDefInitial name
-  state' <- get
-  let (rhoTCOrError, state) = runTypeCheckDefs state' wh
+typeCheckFDef (FDefWh name exp' wh) = do
+  t  <- typeCheckFDefInitial name
+  s' <- get
+  let (rhoTCOrError, s) = runTypeCheckDefs s' wh
   rhoTC <- case rhoTCOrError of
     Left  e     -> throwE e
-    Right state -> return state
+    Right rhoTC -> return rhoTC
   typeCheckFDefFinalize
-    exp
+    exp'
     t
-    TCState { tps = rhoTC, defsProcessor = evalTypeCheckDefs state }
+    TCState { tps = rhoTC, defsProcessor = evalTypeCheckDefs s }
 
 
 procFDecl :: FDecl -> InterpreterStateM ()
@@ -121,14 +119,13 @@ procTDecl :: TDef -> InterpreterStateM ()
 procTDecl (TDef name vs _) = do
   -- Check uniques of Type name
   checkIfNameIsUniqueGlobal ATETypeRedeclaration name
-  tenv <- gets tenv
   unless (allUnique vs) $ throwE $ ATEConflictingDefinitions vs
   addType name (AType $ length vs)
 
 -- Check types in scope and correct number of params
 ctisacnop :: Type -> InterpreterStateM ()
 ctisacnop t = case t of
-  TPoly n     -> pure ()
+  TPoly _     -> pure ()
   TVar  _     -> pure ()
   TNamed n ts -> do
     rhoT <- gets tenv
@@ -143,7 +140,7 @@ cvis :: [VName] -> Type -> InterpreterStateM ()
 cvis vs t = case t of
   TPoly n            -> unless (n `elem` vs) $ throwE $ ATEVariableNotInScope n
   TVar  _            -> pure ()
-  TNamed n        ts -> mapM_ (cvis vs) ts
+  TNamed _        ts -> mapM_ (cvis vs) ts
   (      t1 :-> t2)  -> cvis vs t1 >> cvis vs t2
 
 procTDef :: TDef -> InterpreterStateM ()
@@ -160,7 +157,7 @@ procTDef t@(TDef name vs cs) = do
   mapM_ (addConstructor $ algTType t) cs
 
 createElim, createFold :: TDef -> TVal
-createElim td@(TDef name vs cs) = TVal tp val
+createElim td@(TDef _ vs cs) = TVal tp val
  where
   resTp :: Type
   resTp = TPoly $ getFreeParamName vs
@@ -171,7 +168,7 @@ createElim td@(TDef name vs cs) = TVal tp val
   val :: Val
   val = foldr go (VFun . getElem) cs Map.empty
   getElem :: Map CName Val -> Val -> Val
-  getElem ms (VNamed cname vs) = foldl go' (ms Map.! cname) vs
+  getElem ms (VNamed cname vs') = foldl go' (ms Map.! cname) vs'
   getElem _ _ =
     error
       "Type check failed - last param to the eliminator has to be an instance of a corresponding type."
@@ -180,7 +177,7 @@ createElim td@(TDef name vs cs) = TVal tp val
   go' _        _ = error
     "Type failed - non-last parameter to the eliminator has to be a function"
   go :: TConstr -> (Map CName Val -> Val) -> Map CName Val -> Val
-  go (TConstr cname ts) acc ms = VFun (\v -> acc (Map.insert cname v ms))
+  go (TConstr cname _) acc ms = VFun (\v -> acc (Map.insert cname v ms))
 createFold = undefined
 
 addConstructor :: Type -> TConstr -> InterpreterStateM ()

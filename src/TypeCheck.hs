@@ -3,7 +3,6 @@ import           Types
 import           Error
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Except
-import           Control.Monad.Trans.State
 import qualified Data.Map                      as Map
 import           Data.Map
 
@@ -46,7 +45,7 @@ typeOfM (EApp e1 e2) = do
 
 mapType :: (TId -> Type) -> Type -> Type
 mapType _ t@(TPoly _       ) = t
-mapType f (  TVar  id      ) = f id
+mapType f (  TVar  idx     ) = f idx
 mapType f (  TNamed name ts) = TNamed name $ fmap (mapType f) ts
 mapType f (  t1     :->  t2) = mapType f t1 :-> mapType f t2
 
@@ -55,16 +54,16 @@ runMgu = flip flip Map.empty . ((runReader . runExceptT) .) . mgu
 
 mgu :: Type -> Type -> TypeUnifierM Subst
 mgu t1 t2 | t1 == t2 = ask
-mgu t1@(TVar n1) t2@(TVar n2) | t1 < t2 = mguHelper n1 t2
-                              | t1 > t2 = mgu t2 t1
-mgu t1@(TVar n1) t2                            = mguHelper n1 t2
-mgu t1           t2@(TVar _)                   = mgu t2 t1
-mgu (TNamed n1 ts1) (TNamed n2 ts2) | n1 == n1 = do
+mgu t1@(TVar n1) t2@(TVar _) | t1 < t2 = mguHelper n1 t2
+                             | t1 > t2 = mgu t2 t1
+mgu (TVar n1) t2                               = mguHelper n1 t2
+mgu t1        t2@(TVar _)                      = mgu t2 t1
+mgu (TNamed n1 ts1) (TNamed n2 ts2) | n1 == n2 = do
   when (length ts1 /= length ts2) (throwE TCEParamsLen)
   rho <- ask
   foldM (\rho' (t1, t2) -> local (const rho') (mgu t1 t2)) rho (zip ts1 ts2)
 mgu (t1 :-> t2) (t1' :-> t2') = do
-  rho1 <- mgu t1 t2
+  rho1 <- mgu t1 t1'
   local (const rho1) (mgu t2 t2')
 mgu t1 t2 = throwE $ TCECannotUnify t1 t2
 
