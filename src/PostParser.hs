@@ -7,9 +7,9 @@ import           Types
 
 
 procModule :: FilePath -> Abs.Programme -> Module
-procModule name (Abs.Prog exts imps env) = Module
+procModule name (Abs.Prog exts' imps env) = Module
   name
-  (fmap (\(Abs.Ext (UIdent ext)) -> ext) exts)
+  (fmap (\(Abs.Ext (UIdent ext)) -> ext) exts')
   (fmap (\(Abs.Imp (UIdent imp)) -> imp) imps)
   (procEnv env)
 
@@ -33,7 +33,9 @@ procFDecl :: Abs.FunctionDeclaration -> FDecl
 procFDecl (Abs.FDecl name tp) = FDecl (procFBName name) (procType tp)
 
 procFDef :: Abs.FunctionDefinition -> FDef
-procFDef (Abs.FDef name exp) = FDef (procFBName name) (procExp exp)
+procFDef (Abs.FDef name exp') = FDef (procFBName name) (procExp exp')
+procFDef (Abs.FDefWhere name exp' wh) =
+  FDefWh (procFBName name) (procExp exp') (procEnv wh)
 
 procConstr :: Abs.TypeConstructor -> TConstr
 procConstr (Abs.TConst (UIdent name) ts) = TConstr name (fmap procType ts)

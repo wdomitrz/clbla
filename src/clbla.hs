@@ -1,11 +1,10 @@
 import           System.Environment
 import           Control.Monad.Except
-import           Control.Monad.Reader
 import qualified Data.Map                      as Map
-import           Parser.ParClbla
 import           System.Exit
 import           Error
-import           ProcessModule
+import           ProcessFile
+import           Types
 
 usage :: IO ()
 usage = do
@@ -18,14 +17,26 @@ usage = do
     ]
   exitFailure
 
-runIterpreter = runExceptT
+mainFunction :: String
+mainFunction = "main"
+
+showResult :: IOWithInterpreterError Env -> IO ()
+showResult rhoEIO = do
+  rhoE <- runExceptT rhoEIO
+  case rhoE of
+    Left e -> print e >> exitFailure
+    Right Env { localNames = lNames, fenv = rhoF } ->
+      if mainFunction `elem` lNames
+        then case rhoF Map.! mainFunction of
+          v@TVal{} -> print v
+          _ ->
+            print "No main function defined, but it was declared" >> exitFailure
+        else print "No main function defined" >> exitFailure
 
 main :: IO ()
 main = do
-  args        <- getArgs
-  toInterpret <- case args of
-    []         -> parseModule "<stdin>" getContents
-    [fileName] -> parseFile fileName
-  case runReader (runExceptT toInterpret) Map.empty of
-    Left  e -> print e
-    Right r -> print r
+  args <- getArgs
+  case args of
+    []         -> showResult $ processModule "<stdin>" getContents
+    [fileName] -> showResult $ processFile fileName
+    _          -> usage

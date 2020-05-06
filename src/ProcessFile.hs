@@ -1,4 +1,6 @@
 module ProcessFile where
+import           Control.Monad.Trans.Except
+import           Control.Monad.State
 import           Parser.ParClbla                ( myLexer
                                                 , pProgramme
                                                 )
@@ -7,21 +9,34 @@ import           Parser.ErrM                    ( Err(..) )
 import           PostParser                     ( procModule )
 import           Types
 import           Error
-import           Control.Monad.Trans.Except
-import           System.Environment
+import           BaseEnv
+import           ProcessModule
 
 parse :: FilePath -> String -> Parser.ErrM.Err Module
 parse fn = (procModule fn <$>) . pProgramme . resolveLayout True . myLexer
 
-interpretModule :: Module -> IO (InterpreterM Env)
-interpretModule = undefined
+interpretModule :: Module -> IOWithInterpreterError Env
+interpretModule (Module _ exts' imps defs) = do
+  envs <- mapM processFile imps
+  case evalState (runExceptT $ go envs) (baseEnv exts') of
+    Left  e -> throwE e
+    Right x -> return x
+ where
+  go :: [Env] -> InterpreterStateM Env
+  go envs = do
+    mapM_ combineEnvs envs
+    typeCheckAndProcDefs defs
 
-parseFile :: FilePath -> IO (InterpreterM Module)
-parseFile = parseModule <*> readFile
-
-parseModule :: FilePath -> IO String -> IO (InterpreterM Module)
-parseModule fileName fileContentIO = do
+parseModule :: MName -> IO String -> IOWithInterpreterError Module
+parseModule mName fileContentIO = ExceptT $ do
   fileContent <- fileContentIO
-  return $ case parse fileName fileContent of
-    Ok  prog -> return prog
-    Bad s    -> throwE $ ParserError s
+  case parse mName fileContent of
+    Ok  prog -> return $ return prog
+    Bad s    -> runExceptT $ throwE $ ParserError s
+
+processFile :: FilePath -> IOWithInterpreterError Env
+processFile fp = processModule fp $ readFile fp
+
+processModule :: MName -> IO String -> IOWithInterpreterError Env
+processModule mName mContentIO =
+  parseModule mName mContentIO >>= interpretModule

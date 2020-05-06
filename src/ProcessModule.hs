@@ -1,9 +1,6 @@
 module ProcessModule where
 
-import           Control.Monad                  ( mapM_
-                                                , foldM_
-                                                )
-import           Control.Monad.Reader
+import           Control.Monad
 import           Control.Monad.State
 import           Control.Monad.Except
 import           Control.Monad.Trans.Except
@@ -11,18 +8,11 @@ import qualified Data.Map                      as Map
 import qualified Data.Set                      as Set
 import           TypeCheck
 import           Eval
-import           BaseFunctions                  ( createElim
-                                                , createFold
-                                                , algTType
-                                                )
+import           BaseFunctions
 import           BaseEnv
 import           Exts
 import           Types
 import           Error
-
-foldPrefix, elimPrefix :: String
-elimPrefix = "elim"
-foldPrefix = "fold"
 
 
 
@@ -54,6 +44,13 @@ typeCheckDefs dfs@(Defs _ _ fdfs) = do
 procDefs :: Defs -> InterpreterStateM Env
 procDefs dfs@(Defs _ _ fdfs) = procDefsInitial dfs >> procFDefs fdfs
 
+typeCheckAndProcDefs :: Defs -> InterpreterStateM Env
+typeCheckAndProcDefs dfs@(Defs _ _ fdfs) = do
+  procDefsInitial dfs
+  mapM_ typeCheckFDef fdfs
+  procDefsInitial dfs
+  procFDefs fdfs
+
 procFDefs :: [FDef] -> InterpreterStateM Env
 procFDefs fdfs = gets $ getEnv evalDefs fdfs
 
@@ -70,7 +67,7 @@ typeCheckFDefInitial name = do
 
 typeCheckFDefFinalize :: Exp -> Type -> TCState -> InterpreterStateM ()
 typeCheckFDefFinalize exp' t tcsState = do
-  t' <- case runReader (runExceptT (typeOfM exp')) tcsState of
+  t' <- case evalState (runExceptT (typeOfM exp')) tcsState of
     Left  e  -> throwE e
     Right t' -> return t'
   case runMgu t t' of
@@ -84,7 +81,10 @@ typeCheckFDef (FDef name exp') = do
   typeCheckFDefFinalize
     exp'
     t
-    TCState { tps = onlyType <$> fenv s, defsProcessor = evalTypeCheckDefs s }
+    TCState { tps           = onlyType <$> fenv s
+            , defsProcessor = evalTypeCheckDefs s
+            , uniqueTId     = 1
+            }
 
 typeCheckFDef (FDefWh name exp' wh) = do
   t  <- typeCheckFDefInitial name
@@ -96,7 +96,7 @@ typeCheckFDef (FDefWh name exp' wh) = do
   typeCheckFDefFinalize
     exp'
     t
-    TCState { tps = rhoTC, defsProcessor = evalTypeCheckDefs s }
+    TCState { tps = rhoTC, defsProcessor = evalTypeCheckDefs s, uniqueTId = 0 }
 
 procFDecl :: FDecl -> InterpreterStateM ()
 procFDecl (FDecl name tp) = addFun name $ NoVal tp
@@ -106,7 +106,7 @@ checkIfTypeNameIsUniqueGlobal n =
   gets tenv >>= (flip when (throwE $ ATETypeRedeclaration n) . (n `Map.member`))
 
 procTDecl :: TDef -> InterpreterStateM ()
-procTDecl (TDef name vs _) = do
+procTDecl (TDef name vs cs) = do
   -- Check uniques of Type name
   checkIfTypeNameIsUniqueGlobal name
   foldM_
@@ -115,7 +115,7 @@ procTDecl (TDef name vs _) = do
     )
     []
     vs
-  addType name (AType $ length vs)
+  addType name AType { numOfParams = length vs, constrs = cs }
 
 -- Check variables in scope
 cvis :: [VName] -> Type -> InterpreterStateM ()

@@ -33,7 +33,7 @@ To use an extension write:
 
 replacing `<name of the extension>` with the name of the extension you want to use in the beginning of the file. To use multiple extensions declare the next extension after the previous ones. Name of the extension should start with a capital letter.
 
-Note that the order of the extensions might be important. The extensions are evaluated in the order in which they are enabled in the file.
+Note that the order of the extensions might be important.
 
 ### Already known extensions:
 
@@ -46,9 +46,7 @@ The extensions that might be added in the future are described in the [features 
 
 ## Imports
 
-Names of modules must start with a capital letter and contain only letters, digits, underscores (`_`), apostrophes (`'`) and asterisks (`*`).
-
-Name of the extension must start with a capital letter and contain only letter, digits, underscores (`_`), apostrophes (`'`) and asterisks (`*`).
+Names of the modules must start with a capital letter and contain only letters, digits, underscores (`_`), apostrophes (`'`) and asterisks (`*`).
 
 To import a module, which is associated with a file `<file name>.clbla` write
 
@@ -57,7 +55,7 @@ import <file name>
 ```
 after the (maybe empty) list of extensions.
 
-This import adds all the variables from environment of the `<file name>.clbla` file to the environment of the current file if there was no such an module imported before and does nothing otherwise.
+This import adds all the variables from environment of the `<file name>.clbla` file to the environment of the current file. Note that it may cause covering of some functions. Covering of the types is illegal, while covering of constructors is legal only across two different modules, but not in one module.
 
 To use multiple imports write multiple `import <file name>` directives separated by a semicolon (`;`) or in a new line each.
 

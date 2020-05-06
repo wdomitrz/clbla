@@ -1,6 +1,11 @@
 import STD
 
+
+(<$>) :: (a -> b -> c) -> (a -> b) -> a -> c
 (<$>) = s
+(.) :: (b -> c) -> (a -> b) -> a -> c
 (.) = b
+const :: a -> b -> a
 const = k
+flip :: (a -> b -> c) -> b -> a -> c
 flip = c

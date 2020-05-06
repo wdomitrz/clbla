@@ -4,8 +4,13 @@ import           Data.Set                       ( Set )
 
 -- The [Val] list is reversed in VNamed!
 data Val = VNamed CName [Val] | VFun (Val -> Val)
+instance Show Val where
+  show (VNamed cname vs) = cname ++ " " ++ show vs
+  show (VFun _         ) = "Function"
 data TVal = TVal {onlyType::Type, onlyVal::Val} | NoVal {onlyType:: Type}
-newtype AType = AType {numOfParams :: Int}
+  deriving Show
+data AType = AType {numOfParams :: Int, constrs :: [TConstr]}
+-- constrs is there to distinguish two types form two different modules
   deriving (Eq, Ord, Show, Read)
 
 data Res = RObj TName CName [Res] | RFun Type Type
@@ -14,6 +19,7 @@ data Res = RObj TName CName [Res] | RFun Type Type
 type TDecls = Map TName AType
 type FDefs = Map FName TVal
 data Env = Env {exts :: [Ext], localNames :: Set VName, tenv :: TDecls, fenv :: FDefs}
+  deriving Show
 
 type VName = String -- type variable name
 type MName = String -- module name
@@ -22,7 +28,7 @@ type TName = VName -- type name
 type CName = VName -- constructor name
 type Ext = String -- extension
 type Imp = String -- import
-type TId = Int -- type variable id
+type TId = Integer -- type variable id
 
 data Module = Module MName [Ext] [Imp] Defs
   deriving (Eq, Ord, Show, Read)
