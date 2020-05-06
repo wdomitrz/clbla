@@ -13,7 +13,7 @@ data Res = RObj TName CName [Res] | RFun Type Type
 
 type TDecls = Map TName AType
 type FDefs = Map FName TVal
-data Env = Env {localNames :: Set VName, tenv :: TDecls, fenv :: FDefs}
+data Env = Env {exts :: [Ext], localNames :: Set VName, tenv :: TDecls, fenv :: FDefs}
 
 type VName = String -- type variable name
 type MName = String -- module name

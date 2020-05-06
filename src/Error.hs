@@ -8,8 +8,9 @@ data InterpreterError =
     ParserError String
   | ATETypeRedeclaration TName
   | ATEConstructorRedeclaration CName
-  | ATEFoldRedeclaration VName
-  | ATEConflictingDefinitions [VName]
+  | ATEElimRedeclaration VName
+  | FunRedeclaration FName
+  | ATEConflictingDefinitions VName
   | ATEVariableNotInScope VName
   | ATETypeNameNotUnique TName
   | ATEWrongNuberOfParams TName
