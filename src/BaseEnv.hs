@@ -15,6 +15,13 @@ foldPrefix = "fold"
 sName, kName :: String
 sName = "s"
 kName = "k"
+buildInsNamePrefix :: String
+buildInsNamePrefix = "_"
+buildInFunctions :: [(String, TVal)]
+buildInFunctions = [(sName, createS), (kName, createK)]
+addPrefixedNames :: [(String, a)] -> [(String, a)]
+addPrefixedNames =
+  foldr (\(name, x) -> ([(name, x), (buildInsNamePrefix ++ name, x)] ++)) []
 
 addFunToEnv :: FName -> TVal -> Env -> Env
 addFunToEnv name tv = modifyFEnv (Map.insert name tv)
@@ -26,25 +33,32 @@ modifyFEnv :: (FDefs -> FDefs) -> Env -> Env
 modifyFEnv f rho = rho { fenv = f $ fenv rho }
 
 emptyEnv :: Env
-emptyEnv =
-  Env { exts = [], localNames = Set.empty, tenv = Map.empty, fenv = Map.empty }
+emptyEnv = Env { exts           = []
+               , localTypes     = Set.empty
+               , localFunctions = Set.empty
+               , tenv           = Map.empty
+               , fenv           = Map.empty
+               }
 
 setExtensions :: [Ext] -> Env -> Env
 setExtensions exts' rho = rho { exts = exts' }
 
-addS, addK :: Env -> Env
-addS = addFunToEnv sName createS
-addK = addFunToEnv kName createK
+addBuildInFunctions :: Env -> Env
+addBuildInFunctions = foldr
+  (\(name, tval) acc -> addFunToEnv name tval . acc)
+  id
+  (addPrefixedNames buildInFunctions)
 
 baseEnv :: [Ext] -> Env
-baseEnv exts' = addS $ addK $ setExtensions exts' emptyEnv
+baseEnv exts' = addBuildInFunctions $ setExtensions exts' emptyEnv
 
 combineEnvs :: Env -> InterpreterStateM ()
-combineEnvs Env { tenv = rhoT', fenv = rhoF' } = do
-  rhoT <- gets tenv
-  mapM_ (goT rhoT) $ Map.assocs rhoT'
-  modify (modifyTEnv (Map.union rhoT'))
-  modify (modifyFEnv (Map.union rhoF'))
+combineEnvs Env { localFunctions = lFunctions', tenv = rhoT', fenv = rhoF' } =
+  do
+    rhoT <- gets tenv
+    mapM_ (goT rhoT) $ Map.assocs rhoT'
+    modify (modifyTEnv (Map.union rhoT'))
+    modify (modifyFEnv (Map.union $ Map.restrictKeys rhoF' lFunctions'))
  where
   goT :: TDecls -> (TName, AType) -> InterpreterStateM ()
   goT rhoT (k', v') = case k' `Map.lookup` rhoT of

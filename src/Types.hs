@@ -2,7 +2,6 @@ module Types where
 import           Data.Map                       ( Map )
 import           Data.Set                       ( Set )
 
--- The [Val] list is reversed in VNamed!
 data Val = VNamed CName [Val] | VFun (Val -> Val)
 instance Show Val where
   show (VNamed cname vs) = cname ++ " " ++ show vs
@@ -18,7 +17,8 @@ data Res = RObj TName CName [Res] | RFun Type Type
 
 type TDecls = Map TName AType
 type FDefs = Map FName TVal
-data Env = Env {exts :: [Ext], localNames :: Set VName, tenv :: TDecls, fenv :: FDefs}
+data Env = Env {exts :: [Ext], localTypes :: Set TName,
+                localFunctions :: Set FName, tenv :: TDecls, fenv :: FDefs}
   deriving Show
 
 type VName = String -- type variable name

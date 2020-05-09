@@ -2,7 +2,8 @@ module Eval where
 import           Types
 import           Error
 import qualified Data.Map                      as Map
-import           Data.Function                  ( fix )
+import           Data.Map                       ( Map )
+import           BaseFunctions
 
 impossibleError :: String
 impossibleError = "Type checker failed. This error should be impossible!"
@@ -11,32 +12,26 @@ impossibleError = "Type checker failed. This error should be impossible!"
 type DefsEvaluator = Env -> Defs -> Either InterpreterError Env
 
 evalPartial :: DefsEvaluator -> Env -> Exp -> Val
-evalPartial _ Env { fenv = rho } (EVar n) = case n `Map.lookup` rho of
-  Just TVal { onlyVal = v } -> v
-  _                         -> error impossibleError
+evalPartial _ Env { fenv = rho } (EVar n) = onlyVal $ rho Map.! n
 evalPartial evalDefs env (ELet defs e) = case evalDefs env defs of
   Right env' -> evalPartial evalDefs env' e
   _          -> error impossibleError
-evalPartial evalDefs env (EApp e1 e2) = case evalPartial evalDefs env e1 of
-  VFun f -> f $ evalPartial evalDefs env e2
-  _      -> error impossibleError
-
-evalFDef :: DefsEvaluator -> FDef -> Env -> Val
-evalFDef evalDefs (FDef _ e     ) env = evalPartial evalDefs env e
-evalFDef evalDefs (FDefWh _ e wh) env = case evalDefs env wh of
-  Right env' -> evalPartial evalDefs env' e
+evalPartial evalDefs env (EApp e1 e2) =
+  unVFun (evalPartial evalDefs env e1) $ evalPartial evalDefs env e2
+evalFDef :: DefsEvaluator -> Env -> (Type, FDef) -> TVal
+evalFDef evalDefs env (tp, (FDef _ expr)) =
+  TVal tp $ evalPartial evalDefs env expr
+evalFDef evalDefs env (tp, (FDefWh _ expr wh)) = case evalDefs env wh of
+  Right env' -> TVal tp $ evalPartial evalDefs env' expr
   _          -> error impossibleError
 
-modifyEnvOn :: FName -> Val -> Env -> Env
-modifyEnvOn name val env@Env { fenv = rhoF } =
-  let tp :: Type
-      tp = onlyType (rhoF Map.! name)
-  in  env { fenv = Map.insert name (TVal tp val) rhoF }
-
-getEnv :: DefsEvaluator -> [FDef] -> Env -> Env
-getEnv evalDefs fdfs = fix
-  (\et e -> foldr
-    (\fdf e' -> modifyEnvOn (fname fdf) (evalFDef evalDefs fdf e') e')
-    (et e)
-    fdfs
-  )
+getEnvWith :: DefsEvaluator -> Map FName (Type, FDef) -> Env -> Env
+getEnvWith evalDefs fdfs env = env { fenv = rhoFNew }
+ where
+  rhoF, rhoFNew :: FDefs
+  rhoF = fenv env
+  rhoFNew =
+    let rhoF' = Map.union
+          (fmap (\e -> evalFDef evalDefs env { fenv = rhoF' } e) fdfs)
+          rhoF
+    in  rhoF'

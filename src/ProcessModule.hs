@@ -17,7 +17,8 @@ import           Error
 
 
 resetLocalNames :: InterpreterStateM ()
-resetLocalNames = modify (\env -> env { localNames = Set.empty })
+resetLocalNames =
+  modify (\env -> env { localTypes = Set.empty, localFunctions = Set.empty })
 
 runTypeCheckDefs :: Env -> Defs -> (Either InterpreterError TEnv, Env)
 runTypeCheckDefs env defs = runState (runExceptT $ typeCheckDefs defs) env
@@ -30,8 +31,8 @@ evalDefs env defs = evalState (runExceptT $ procDefs defs) env
 
 procDefsInitial :: Defs -> InterpreterStateM ()
 procDefsInitial (Defs tdfs fdcls _) = do
-  mapM_ procTDecl tdfs
   resetLocalNames
+  mapM_ procTDecl tdfs
   mapM_ procTDef  tdfs
   mapM_ procFDecl fdcls
 
@@ -48,11 +49,16 @@ typeCheckAndProcDefs :: Defs -> InterpreterStateM Env
 typeCheckAndProcDefs dfs@(Defs _ _ fdfs) = do
   procDefsInitial dfs
   mapM_ typeCheckFDef fdfs
-  procDefsInitial dfs
   procFDefs fdfs
 
 procFDefs :: [FDef] -> InterpreterStateM Env
-procFDefs fdfs = gets $ getEnv evalDefs fdfs
+procFDefs fdfs = do
+  rho <- get
+  let rhoF = fenv rho
+  let go :: FDef -> (FName, (Type, FDef))
+      go fdf =
+        let name = fname fdf in (name, (onlyType (rhoF Map.! name), fdf))
+  return $ getEnvWith evalDefs (Map.fromList (fmap go fdfs)) rho
 
 typeCheckFDefInitial :: FName -> InterpreterStateM Type
 typeCheckFDefInitial name = do
@@ -70,7 +76,7 @@ typeCheckFDefFinalize exp' t tcsState = do
   t' <- case evalState (runExceptT (typeOfM exp')) tcsState of
     Left  e  -> throwE e
     Right t' -> return t'
-  case runMgu t t' of
+  case evalMgu t t' t' of
     Left  e -> throwE e
     Right _ -> return ()
 
@@ -101,20 +107,10 @@ typeCheckFDef (FDefWh name exp' wh) = do
 procFDecl :: FDecl -> InterpreterStateM ()
 procFDecl (FDecl name tp) = addFun name $ NoVal tp
 
-checkIfTypeNameIsUniqueGlobal :: VName -> InterpreterStateM ()
-checkIfTypeNameIsUniqueGlobal n =
-  gets tenv >>= (flip when (throwE $ ATETypeRedeclaration n) . (n `Map.member`))
 
 procTDecl :: TDef -> InterpreterStateM ()
 procTDecl (TDef name vs cs) = do
-  -- Check uniques of Type name
-  checkIfTypeNameIsUniqueGlobal name
-  foldM_
-    (\vs' v' -> when (v' `elem` vs') (throwE $ ATEConflictingDefinitions v')
-      >> return (v' : vs')
-    )
-    []
-    vs
+  civpu vs
   addType name AType { numOfParams = length vs, constrs = cs }
 
 -- Check variables in scope
@@ -133,28 +129,36 @@ procTDef t@(TDef name vs cs) = do
   mapM_ (addConstructor $ algTType t)           cs
   gets (enabled elimOff)
     >>= flip unless (addFun (elimPrefix ++ name) $ createElim t)
-  gets (enabled elimOff)
+  gets (enabled foldOn)
     >>= flip when (addFun (foldPrefix ++ name) $ createFold t)
 
 addConstructor :: Type -> TConstr -> InterpreterStateM ()
 addConstructor td c@(TConstr cname _) = addFun cname $ createContructor td c
 
-createContructor :: Type -> TConstr -> TVal
-createContructor baseTp (TConstr cname ts) = TVal tp val
+checkIfTypeNameIsUniqueGlobal :: TName -> InterpreterStateM ()
+checkIfTypeNameIsUniqueGlobal n = do
+  rhoT <- gets tenv
+  when (n `Map.member` rhoT) (throwE $ ATETypeRedeclaration n)
+
+-- Check if variable parameters are unique
+civpu :: [VName] -> InterpreterStateM ()
+civpu = foldM_ go []
  where
-  tp :: Type
-  tp = foldr (:->) baseTp ts
-  val :: Val
-  val = foldr go (VNamed cname) ts []
-  go :: a -> ([Val] -> Val) -> [Val] -> Val
-  go _ acc vs = VFun (\v -> acc (v : vs))
+  go :: [VName] -> VName -> InterpreterStateM [VName]
+  go vs' v' = when (v' `elem` vs') (throwE $ ATEConflictingDefinitions v')
+    >> return (v' : vs')
+
 
 addType :: TName -> AType -> InterpreterStateM ()
-addType name t = modify (\rho -> rho { tenv = Map.insert name t $ tenv rho })
+addType name t = do
+  -- Check uniques of Type name
+  checkIfTypeNameIsUniqueGlobal name
+  modify (\rho -> rho { localTypes = name `Set.insert` localTypes rho })
+  modify (\rho -> rho { tenv = Map.insert name t $ tenv rho })
 
-checkIfNameIsUniqueLocal :: FName -> InterpreterStateM ()
-checkIfNameIsUniqueLocal n =
-  gets localNames
+checkIfFuctionNameIsUniqueLocal :: FName -> InterpreterStateM ()
+checkIfFuctionNameIsUniqueLocal  n =
+  gets localFunctions
     >>= (flip when (throwE $ FunRedeclaration n) . (n `Set.member`))
 
 -- Check types in scope and correct number of params
@@ -173,6 +177,6 @@ ctisacnop t = case t of
 addFun :: FName -> TVal -> InterpreterStateM ()
 addFun name f = do
   ctisacnop $ onlyType f
-  checkIfNameIsUniqueLocal name
-  modify (\rho -> rho { localNames = name `Set.insert` localNames rho })
+  checkIfFuctionNameIsUniqueLocal name
+  modify (\rho -> rho { localFunctions = name `Set.insert` localFunctions rho })
   modify (addFunToEnv name f)

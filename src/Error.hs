@@ -17,7 +17,9 @@ data InterpreterError =
   | FunConflictingDeclarations FName
   | FunDefinitionWithoutDeclaration FName
   | ModuleTypesConflictingDectariation TName
+  | ErrorInModule MName InterpreterError
   | TCE String
+  | TCEInfiniteType Type Type
   | TCEVariableNotInScope FName
   | TCETypeNotFunctional Type
   | TCECannotUnify Type Type

@@ -25,8 +25,8 @@ showResult rhoEIO = do
   rhoE <- runExceptT rhoEIO
   case rhoE of
     Left e -> print e >> exitFailure
-    Right Env { localNames = lNames, fenv = rhoF } ->
-      if mainFunction `elem` lNames
+    Right Env { localFunctions = lFunctions , fenv = rhoF } ->
+      if mainFunction `elem` lFunctions
         then case rhoF Map.! mainFunction of
           v@TVal{} -> print v
           _ ->

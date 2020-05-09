@@ -1,9 +1,9 @@
 module TypeCheck where
 import           Types
 import           Error
-import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.Trans.Except
+import           Control.Monad.Reader
 import qualified Data.Map                      as Map
 import           Data.Map                       ( Map )
 
@@ -13,12 +13,18 @@ data MPS = MPS {tcs :: TCState, unfd :: Map VName Integer}
 type TypeCheckerM a = InterpreterStateMParam TCState a
 type MPState a = State MPS a
 type Subst = Map TId Type
-type TypeUnifierM a = InterpreterReaderMParam Subst a
+type TypeUnifierM a = InterpreterStateMParam Subst a
 
-takeNewId :: MPState Integer
-takeNewId = do
+takeNewIdMP :: MPState Integer
+takeNewIdMP = do
   n <- gets (uniqueTId . tcs)
   modify (\s -> s { tcs = (tcs s) { uniqueTId = n + 1 } })
+  return n
+
+takeNewIdTC :: TypeCheckerM Integer
+takeNewIdTC = do
+  n <- gets uniqueTId
+  modify (\s -> s { uniqueTId = n + 1 })
   return n
 
 makePolyPoly :: Type -> MPState Type
@@ -26,7 +32,10 @@ makePolyPoly (TPoly x) = do
   unfd' <- gets unfd
   case x `Map.lookup` unfd' of
     Just n  -> return $ TVar n
-    Nothing -> takeNewId >>= (return . TVar)
+    Nothing -> do
+      n <- takeNewIdMP
+      modify (\s -> s { unfd = Map.insert x n unfd' })
+      return $ TVar n
 makePolyPoly t@(TVar _   ) = return t
 makePolyPoly (  t1 :-> t2) = do
   t1' <- makePolyPoly t1
@@ -61,12 +70,11 @@ typeOfM (ELet ds e) = do
 typeOfM (EApp e1 e2) = do
   t1 <- typeOfM e1
   t2 <- typeOfM e2
-  case t1 of
-    t2' :-> t -> case runMgu t2 t2' of
-      Right unified -> (return :: Type -> TypeCheckerM Type)
-        $ mapType (\x -> Map.findWithDefault (TVar x) x unified) t
-      Left e -> (throwE :: InterpreterError -> TypeCheckerM Type) e
-    _ -> throwE $ TCETypeNotFunctional t1
+  n  <- takeNewIdTC
+  let t = TVar n
+  case evalMgu t1 (t2 :-> t) t of
+    Right t' -> return t'
+    Left  e  -> (throwE :: InterpreterError -> TypeCheckerM Type) e
 
 mapType :: (TId -> Type) -> Type -> Type
 mapType _ t@(TPoly _       ) = t
@@ -74,28 +82,42 @@ mapType f (  TVar  idx     ) = f idx
 mapType f (  TNamed name ts) = TNamed name $ fmap (mapType f) ts
 mapType f (  t1     :->  t2) = mapType f t1 :-> mapType f t2
 
-runMgu :: Type -> Type -> Either InterpreterError Subst
-runMgu = flip flip Map.empty . ((runReader . runExceptT) .) . mgu
+evalMgu :: Type -> Type -> Type -> Either InterpreterError Type
+evalMgu t t' t'' =
+  evalState (runExceptT $ mgu t t' >> gets (runReader $ subst t'')) Map.empty
 
-mgu :: Type -> Type -> TypeUnifierM Subst
-mgu t1 t2 | t1 == t2 = ask
-mgu t1@(TVar n1) t2@(TVar _) | t1 < t2 = mguHelper n1 t2
-                             | t1 > t2 = mgu t2 t1
-mgu (TVar n1) t2                               = mguHelper n1 t2
-mgu t1        t2@(TVar _)                      = mgu t2 t1
+mgu :: Type -> Type -> TypeUnifierM ()
+mgu t1 t2 | t1 == t2 = return ()
+mgu t1@(TVar n1) t2
+  | n1 `isIn` t2 = throwE $ TCEInfiniteType t1 t2
+  | otherwise = modify
+    (fmap (flip runReader (Map.singleton n1 t2) . subst) . Map.insert n1 t2)
+mgu t1 t2@(TVar _)                             = mgu t2 t1
+
 mgu (TNamed n1 ts1) (TNamed n2 ts2) | n1 == n2 = do
   when (length ts1 /= length ts2) (throwE TCEParamsLen)
-  rho <- ask
-  foldM (\rho' (t1, t2) -> local (const rho') (mgu t1 t2)) rho (zip ts1 ts2)
-mgu (t1 :-> t2) (t1' :-> t2') = do
-  rho1 <- mgu t1 t1'
-  local (const rho1) (mgu t2 t2')
+  mapM_ (uncurry substsMguIn) $ zip ts1 ts2
+mgu (t1 :-> t2) (t1' :-> t2') =
+  mapM_ (uncurry substsMguIn) [(t1, t1'), (t2, t2')]
 mgu t1 t2 = throwE $ TCECannotUnify t1 t2
 
-mguHelper :: TId -> Type -> TypeUnifierM Subst
-mguHelper n1 t2 = do
-  rho <- ask
-  case n1 `Map.lookup` rho of
-    Just t1' -> mgu t1' t2
-    Nothing  -> asks (Map.insert n1 t2)
+substsMguIn :: Type -> Type -> TypeUnifierM ()
+substsMguIn t t' = do
+  nt  <- gets $ runReader $ subst t
+  nt' <- gets $ runReader $ subst t'
+  mgu nt nt'
 
+isIn :: TId -> Type -> Bool
+isIn n (TVar n'      ) = n == n'
+isIn n (t1     :-> t2) = any (isIn n) [t1, t2]
+isIn n (TNamed _   ts) = any (isIn n) ts
+isIn _ _               = False
+
+subst :: Type -> Reader Subst Type
+subst t@(TVar  n      ) = asks $ Map.findWithDefault t n
+subst t@(TPoly _      ) = return t
+subst (  TNamed n   ts) = TNamed n <$> mapM subst ts
+subst (  t1     :-> t2) = do
+  t1' <- subst t1
+  t2' <- subst t2
+  return (t1' :-> t2')

@@ -43,9 +43,13 @@ procConstr (Abs.TInfixConst t (Abs.TIConstName (Abs.InfixFunctionNameF name)) ts
   = TConstr name (fmap procType (t : ts))
 
 procType :: Abs.Type -> Type
-procType (Abs.TFun   t1            t2) = procType t1 :-> procType t2
-procType (Abs.TNamed (UIdent name) ts) = TNamed name (fmap procType ts)
-procType (Abs.TVar (LIdent name)     ) = TPoly name
+procType (Abs.TFun   t1            t2    ) = procType t1 :-> procType t2
+procType (Abs.TNamed (UIdent name) ts    ) = TNamed name (fmap procType ts)
+procType (Abs.TNamedNoParam (UIdent name)) = TNamed name []
+procType (Abs.TVar          (LIdent name)) = TPoly name
+
+trimKName :: FName -> FName
+trimKName = tail . init
 
 procExp :: Abs.Expression -> Exp
 procExp (Abs.ELet env e                      ) = ELet (procEnv env) (procExp e)
@@ -75,7 +79,7 @@ procExp (Abs.EOpI e1 (Abs.InfixFunctionNameI name) e2) =
 procExp (Abs.EOpJ e1 (Abs.InfixFunctionNameJ name) e2) =
   EApp (EApp (EVar name) (procExp e1)) (procExp e2)
 procExp (Abs.EOpK e1 (Abs.InfixFunctionNameK name) e2) =
-  EApp (EApp (EVar name) (procExp e1)) (procExp e2)
+  EApp (EApp (EVar $ trimKName name) (procExp e1)) (procExp e2)
 
 procFBName :: Abs.FunctionBaseName -> FName
 procFBName (Abs.FBName (LIdent name)) = name
@@ -98,4 +102,4 @@ procFBName (Abs.FIBName (Abs.FunctionInfixNameInfixFunctionNameI (Abs.InfixFunct
 procFBName (Abs.FIBName (Abs.FunctionInfixNameInfixFunctionNameJ (Abs.InfixFunctionNameJ name)))
   = name
 procFBName (Abs.FIBName (Abs.FunctionInfixNameInfixFunctionNameK (Abs.InfixFunctionNameK name)))
-  = name
+  = trimKName name
