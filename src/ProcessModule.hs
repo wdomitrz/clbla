@@ -111,7 +111,7 @@ procFDecl (FDecl name tp) = addFun name $ NoVal tp
 procTDecl :: TDef -> InterpreterStateM ()
 procTDecl (TDef name vs cs) = do
   civpu vs
-  addType name AType { numOfParams = length vs, constrs = cs }
+  addType name AType { numOfParams = length vs, params = vs, constrs = cs }
 
 -- Check variables in scope
 cvis :: [VName] -> Type -> InterpreterStateM ()

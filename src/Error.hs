@@ -28,7 +28,7 @@ data InterpreterError =
 
 type InterpreterReaderMParam s a = ExceptT InterpreterError (Reader s) a
 type InterpreterStateMParam s a = ExceptT InterpreterError (State s) a
-type InterpreterReaderM a = InterpreterStateMParam Env a
+type InterpreterReaderM a = InterpreterReaderMParam Env a
 type InterpreterStateM a = InterpreterStateMParam Env a
 
 type IOWithInterpreterError = ExceptT InterpreterError IO

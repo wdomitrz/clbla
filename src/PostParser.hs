@@ -38,7 +38,8 @@ procFDef (Abs.FDefWhere name exp' wh) =
   FDefWh (procFBName name) (procExp exp') (procEnv wh)
 
 procConstr :: Abs.TypeConstructor -> TConstr
-procConstr (Abs.TConst (UIdent name) ts) = TConstr name (fmap procType ts)
+procConstr (Abs.TConst (UIdent name) ts  ) = TConstr name (fmap procType ts)
+procConstr (Abs.TConstEmpty (UIdent name)) = TConstr name []
 procConstr (Abs.TInfixConst t (Abs.TIConstName (Abs.InfixFunctionNameF name)) ts)
   = TConstr name (fmap procType (t : ts))
 

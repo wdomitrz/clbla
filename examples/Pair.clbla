@@ -1,3 +1,5 @@
+import STD
+
 data Pair a b = Pair a b
 
 (<>) :: a -> b -> Pair a b

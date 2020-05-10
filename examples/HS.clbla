@@ -1,11 +1,15 @@
 import STD
 
 
-(<$>) :: (a -> b -> c) -> (a -> b) -> a -> c
-(<$>) = s
+(<*>) :: (a -> b -> c) -> (a -> b) -> a -> c
+(<*>) = s
 (.) :: (b -> c) -> (a -> b) -> a -> c
 (.) = b
 const :: a -> b -> a
 const = k
 flip :: (a -> b -> c) -> b -> a -> c
 flip = c
+id :: a -> a
+id = i
+liftM2 :: (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+liftM2 = lift2

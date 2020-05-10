@@ -8,7 +8,8 @@ instance Show Val where
   show (VFun _         ) = "Function"
 data TVal = TVal {onlyType::Type, onlyVal::Val} | NoVal {onlyType:: Type}
   deriving Show
-data AType = AType {numOfParams :: Int, constrs :: [TConstr]}
+data AType = AType {numOfParams :: Int, params :: [VName],
+                    constrs :: [TConstr]}
 -- constrs is there to distinguish two types form two different modules
   deriving (Eq, Ord, Show, Read)
 
@@ -49,8 +50,12 @@ data FDef = FDef {fname::FName, fexp::Exp}
           | FDefWh {fname::FName, fexp::Exp, fwhere::Defs}
   deriving (Eq, Ord, Show, Read)
 
-data Defs = Defs [TDef] [FDecl] [FDef]
+data Defs = Defs {defsTDef :: [TDef], defsFDecl :: [FDecl], defsFDef :: [FDef]}
   deriving (Eq, Ord, Show, Read)
 
 data Exp = EVar FName | ELet Defs Exp | EApp Exp Exp
   deriving (Eq, Ord, Show, Read)
+
+data AnnotExp a = AEVar {aEVarFname :: FName, annot :: a}
+                | AELet {aEVarDefs :: Defs, aEVarExp :: Exp, annot :: a}
+                | AEApp {aEVarE1 :: Exp, aEVarE2 :: Exp, annot :: a}

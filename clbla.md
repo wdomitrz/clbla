@@ -27,7 +27,7 @@ Names of extensions must start with a capital letter and contain only letters, d
 
 To use an extension write:
 
-```clbla
+```haskell
 {# LANGUAGE <name of the extension> #}
 ```
 
@@ -35,7 +35,7 @@ replacing `<name of the extension>` with the name of the extension you want to u
 
 Note that the order of the extensions might be important.
 
-### Already known extensions:
+### Already known extensions
 
 * `FOn` - extension enabling automatically implemented folds
 * `NElim` - extension disabling automatically implemented eliminators
@@ -50,12 +50,13 @@ Names of the modules must start with a capital letter and contain only letters, 
 
 To import a module, which is associated with a file `<file name>.clbla` write
 
-```clbla
+```haskell
 import <file name>
 ```
+
 after the (maybe empty) list of extensions.
 
-This import adds all the variables from environment of the `<file name>.clbla` file to the environment of the current file. Note that it may cause covering of some functions. Covering of the types is illegal, while covering of constructors is legal only across two different modules, but not in one module.
+This import adds all the types and from environment of the `<file name>.clbla` file and all functions defined in that file (note that  to the environment of the current file. Note that it may cause covering of some functions. Covering of the types is illegal, while covering of constructors is legal only across two different modules, but not in one module. If two modules import type with the same name the import will not fail if and ONLY if the types have exactly the same definitions.
 
 To use multiple imports write multiple `import <file name>` directives separated by a semicolon (`;`) or in a new line each.
 
@@ -77,7 +78,7 @@ The language allows algebraic and functional types. To construct an functional t
 
 Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of typs `c` and `A b c` and `E` with parameter `b` write:
 
-```clbla
+```haskell
 data A b c = D c (A b c) | E b
 ```
 
@@ -85,7 +86,7 @@ data A b c = D c (A b c) | E b
 
 The constructors of types (`D` and `E` in the example above) are treated as a functions from their arguments to that type. For example:
 
-```
+```haskell
 D :: c -> A b c -> A b c
 E :: b -> A b c
 ```
@@ -98,7 +99,7 @@ One can define an infix constructor. Its name must start with `:` (colon) and fo
 
 The `data A b c = D c (A b c) | E b` declaration will automatically generate eliminator and fold (to enable fold use an extension):
 
-```clbla
+```haskell
 elimA :: (c -> A b c -> d) -> (b -> d) -> A b c -> d
 foldA :: (c -> d -> d) -> (b -> d) -> A b c -> d
 ```
@@ -108,7 +109,7 @@ Note that:
 * eliminator for a non-recursive type is also a fold.
 * fold can be created with an eliminator in an efficient way. For example:
 
-```clbla
+```haskell
 foldA = w `b` b elimA `b` s (b `b` c `b` (b b)) foldA
 ```
 
@@ -121,35 +122,34 @@ For the sake of the simplicity I will focus on this type `data A b c = D c (A b 
 
 First construct a type which will represent object of type `A b c` and of parameters of its constructor.
 
-
-```clbla
+```haskell
 data A' b c = D' (A b c) c (A b c) | E' (A b c) b
 ```
 
 Its fold has the type `foldA' :: (A b c -> c -> A b c -> d) -> (A b c -> b -> d) -> A' b c -> d`.  First we can implement function `valueA'` (which takes the value of `A b c` element from `A' b c` element discarding constructor parameter):
 
-```clbla
+```haskell
 valueA' :: A' b c -> A b c
 valueA' = foldA' (k `b` k) k
 ```
 
 Now we can implement a `historyA` function which creates `A' b c` element from `A b c`.
 
-```clbla
+```haskell
 historyA :: A b c -> A' b c
 historyA = foldA (c s valueA' `b` s (c c) (b D' `b` b' valueA' `b` D)) (s (c E') E)
 ```
 
 And now we get the eliminator in quite straightforward way:
 
-```clbla
+```haskell
 elimA :: (c -> A b c -> d) -> (b -> d) -> A b c -> d
 elimA = c c historyA `b` b b `b` b' k `b` foldA' `b` k
 ```
 
 One could evaluate the proof in `clbla` with `FOn` and `NElim` extensions or in `Haskell` by adding:
 
-```clbla
+```haskell
 foldA :: (c -> d -> d) -> (b -> d) -> A b c -> d
 foldA f x (D c a) = f c (foldA f x a)
 foldA _ x (E b) = x b
@@ -176,13 +176,13 @@ QED
 
 Consider a definition of natural numbers as in `Nats.clbla`:
 
-```clbla
+```haskell
 data Nat :: S Nat | Zero
 ```
 
 then if not disabled one could use the eliminator to create predecessor function (predecessor of 0 is assumed to be 0):
 
-```clbla
+```haskell
 pred :: Nat -> Nat
 pred = elimNat i Zero
 ```
@@ -191,13 +191,13 @@ pred = elimNat i Zero
 
 Consider a definition of a polymorphic list type:
 
-```clbla
+```haskell
 data List a = Next a (List a) | Nil
 ```
 
 Its eliminator, `foldList :: (a -> b -> b) -> b -> List a -> b` is known as `foldr` in the Haskell language. It does not generate the `foldl` function however it can be easily written as
 
-```clbla
+```haskell
 foldListL :: (a -> b -> a) -> a -> List b -> a
 foldListL = b c (b (c foldList i) (b (b (c b)) c))
 ```
@@ -208,13 +208,13 @@ using `b` and `c` combinators from the `STD` library.
 
 One might want to use `Bool` type. To do so simply declare:
 
-```clbla
+```haskell
 data Bool = True | False
 ```
 
 and
 
-```clbla
+```haskell
 if :: Bool -> a -> a -> a
 if = c (b c foldBool)
 ```
@@ -227,7 +227,7 @@ By functions I do understand all variables (including 0-arguments functions).
 
 To declare a function write:
 
-```clbla
+```haskell
 <function name> :: <function type>
 ```
 
@@ -235,7 +235,7 @@ To declare a function write:
 
 To define a function write:
 
-```clbla
+```haskell
 <function name> = <expression> [where <environment>]
 ```
 
@@ -245,14 +245,14 @@ The `where <environment>` part is optional. Replace the `<environment>` with an 
 
 There are 2 build in functions
 
-```clbla
+```haskell
 s :: (a -> b -> c) -> (a -> b) -> a -> c
 k :: a -> b -> a
 ```
 
 satisfying:
 
-```
+```haskell
 s x y z = x z (y z)
 k x y = x
 ```
@@ -261,7 +261,7 @@ k x y = x
 
 An addition to the interpreter is a `std` library. With at least these functions:
 
-```clbla
+```haskell
 i :: a -> a
 i = s k k
 
@@ -292,7 +292,7 @@ An infix operator is either an operator whose name is composed from these `!#$%&
 
 Name starting with `:` are reserved for infix type constructors. Other base infix operators can be defined as an ordinary functions by using `(` `)` (round brackets). For example:
 
-```clbla
+```haskell
 (++) = concat
 ```
 
@@ -300,7 +300,7 @@ is a valid function declaration (assuming that `concat` exists in this environme
 
 All base infix operators can be used as ordinary functions when surrounded by `(` `)` (round brackets). For example:
 
-```clbla
+```haskell
 doubleList = w (++)
 ```
 
@@ -340,7 +340,7 @@ Adding build-in `lambda*` that would transform the programme tree as follows:
 
 with syntax
 
-```clbla
+```haskell
 lambda* <variable> <expression>
 ```
 

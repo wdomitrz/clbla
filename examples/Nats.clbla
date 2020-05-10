@@ -3,6 +3,7 @@
 {# LANGUAGE NElim #}
 
 import STD
+import HS
 import Bool
 import Pair
 
@@ -93,5 +94,6 @@ ackerman = fst . foldNat go (Pair S one)
   where
     go :: Pair (Nat -> Nat) Nat -> Pair (Nat -> Nat) Nat
     go = lift2 Pair go' (S `b` snd)
+    go' :: Pair (Nat -> c) Nat -> Nat -> c
     go' = s (s `b` c (if `b` isZero) `b` c fst one)
             (lift2 b fst (b' pred `b` ackerman `b` snd))

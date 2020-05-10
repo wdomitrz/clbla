@@ -24,16 +24,18 @@ separator Parameter "";
 ParamVar. Parameter ::= LIdent;
 
 separator nonempty TypeConstructor "|";
-TConst.      TypeConstructor ::= UIdent [Type];
-TInfixConst. TypeConstructor ::= Type TypeInfixConstructorName [Type];
+TConst.      TypeConstructor ::= UIdent [Type2];
+-- I have added the option of an empty contructor, because list of Type2 objects
+-- is by default nonempty to avoid conflicts in grammar.
+TConstEmpty. TypeConstructor ::= UIdent;
+TInfixConst. TypeConstructor ::= Type TypeInfixConstructorName [Type2];
 
-separator Type "";
-TFun.   Type  ::= Type "->" Type1;
-TNamed. Type1 ::= UIdent [Type];
+coercions Type 2;
+separator nonempty Type2 "";
+TFun.   Type  ::= Type1 "->" Type;
+TNamed. Type1 ::= UIdent [Type2];
+TNamedNoParam. Type2 ::= UIdent;
 TVar.   Type2 ::= LIdent;
-_. Type  ::= Type1;
-_. Type1 ::= Type2;
-_. Type2 ::= "(" Type ")";
 
 -- Function Definition and declaration
 FDecl. FunctionDeclaration ::= FunctionBaseName "::" Type;
@@ -41,21 +43,9 @@ FDecl. FunctionDeclaration ::= FunctionBaseName "::" Type;
 FDef. FunctionDefinition ::= FunctionBaseName "=" Expression;
 FDefWhere. FunctionDefinition ::= FunctionBaseName "=" Expression "where" "{" Environment "}";
 
-coercions Expression 16;
-_. Expression   ::= Expression1;
-_. Expression1  ::= Expression2;
-_. Expression2  ::= Expression3;
-_. Expression3  ::= Expression4;
-_. Expression4  ::= Expression5;
-_. Expression5  ::= Expression6;
-_. Expression6  ::= Expression7;
-_. Expression7  ::= Expression8;
-_. Expression8  ::= Expression9;
-_. Expression9  ::= Expression10;
-_. Expression10 ::= Expression11;
-_. Expression11 ::= Expression12;
-_. Expression12 ::= "(" Expression ")";
-
+coercions Expression 12;
+-- I keep the names of operators' constructors to have the possibility to
+-- rebuild the generated tree using this informations
 EOpA. Expression   ::=Expression1  InfixFunctionNameA Expression;
 EOpB. Expression1  ::=Expression2  InfixFunctionNameB Expression1;
 EOpC. Expression2  ::=Expression3  InfixFunctionNameC Expression2;
