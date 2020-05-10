@@ -95,7 +95,7 @@ mgu t1@(TVar n1) t2
 mgu t1 t2@(TVar _)                             = mgu t2 t1
 
 mgu (TNamed n1 ts1) (TNamed n2 ts2) | n1 == n2 = do
-  when (length ts1 /= length ts2) (throwE TCEParamsLen)
+  when (length ts1 /= length ts2) (throwE $ TCEParamsLen n1)
   mapM_ (uncurry substsMguIn) $ zip ts1 ts2
 mgu (t1 :-> t2) (t1' :-> t2') =
   mapM_ (uncurry substsMguIn) [(t1, t1'), (t2, t2')]

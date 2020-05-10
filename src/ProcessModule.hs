@@ -15,11 +15,6 @@ import           Types
 import           Error
 
 
-
-resetLocalNames :: InterpreterStateM ()
-resetLocalNames =
-  modify (\env -> env { localTypes = Set.empty, localFunctions = Set.empty })
-
 runTypeCheckDefs :: Env -> Defs -> (Either InterpreterError TEnv, Env)
 runTypeCheckDefs env defs = runState (runExceptT $ typeCheckDefs defs) env
 
@@ -106,7 +101,6 @@ typeCheckFDef (FDefWh name exp' wh) = do
 
 procFDecl :: FDecl -> InterpreterStateM ()
 procFDecl (FDecl name tp) = addFun name $ NoVal tp
-
 
 procTDecl :: TDef -> InterpreterStateM ()
 procTDecl (TDef name vs cs) = do

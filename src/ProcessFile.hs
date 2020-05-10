@@ -27,6 +27,13 @@ interpretModule (Module mname exts' imps defs) = do
     mapM_ combineEnvs envs
     typeCheckAndProcDefs defs
 
+interpretModuleInteractive :: Env -> Module -> IOWithInterpreterError Env
+interpretModuleInteractive rho m = do
+  rho' <- interpretModule m
+  case evalState (runExceptT $ combineEnvsForInteractive rho') rho of
+    Left  e -> throwE e
+    Right x -> return x
+
 parseModule :: MName -> IO String -> IOWithInterpreterError Module
 parseModule mName fileContentIO = ExceptT $ do
   fileContent <- fileContentIO
