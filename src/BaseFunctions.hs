@@ -18,7 +18,9 @@ algTType (TDef name vs _) = TNamed name (fmap TPoly vs)
 unVFun :: Val -> (Val -> Val)
 unVFun (VFun f) = f
 unVFun x =
-  error $ "Type checker failed - an object should be a function and is: " ++ show x
+  error
+    $  "Type checker failed - an object should be a function and is: "
+    ++ show x
 unVNamed :: Val -> (CName, [Val])
 unVNamed (VNamed cname vs) = (cname, vs)
 unVNamed x =
@@ -26,7 +28,7 @@ unVNamed x =
     $  "Type checker failed - an object should be a named object and is: "
     ++ show x
 
-createS, createK :: TVal
+createS, createK, createUndefined :: TVal
 createS = TVal tp val
  where
   tp :: Type
@@ -41,6 +43,7 @@ createK = TVal tp val
   tp = TPoly "a" :-> (TPoly "b" :-> TPoly "a")
   val :: Val
   val = VFun (VFun . const)
+createUndefined = NoVal (TPoly "a")
 
 createContructor :: Type -> TConstr -> TVal
 createContructor baseTp (TConstr cname ts) = TVal tp val
@@ -65,7 +68,10 @@ createElim td@(TDef _ vs cs) = TVal tp val
   val = foldr go (VFun . getElem) cs Map.empty
   getElem :: Map CName Val -> Val -> Val
   getElem ms x =
-    let (cname, vs') = unVNamed x in foldl unVFun (ms Map.! cname) vs'
+    let cname :: CName
+        vs' :: [Val]
+        (cname, vs') = unVNamed x
+    in  foldl unVFun (ms Map.! cname) vs'
   go :: TConstr -> (Map CName Val -> Val) -> Map CName Val -> Val
   go (TConstr cname _) acc ms = VFun (\v -> acc (Map.insert cname v ms))
 
@@ -86,37 +92,19 @@ createFold td@(TDef _ vs cs) = TVal tp val
       cs
     )
   -- indicators which constructors parameters should be replaced with fold call
-  iwcpsbrwfc :: Map CName [Bool]
-  iwcpsbrwfc =
-    Map.fromList $ fmap (\(TConstr cname ts) -> (cname, fmap (tp ==) ts)) cs
+  iwcpsbrwfc :: CName -> [Bool]
+  iwcpsbrwfc = (Map.!) $ Map.fromList $ fmap
+    (\(TConstr cname ts) -> (cname, fmap (mt ==) ts))
+    cs
   val :: Val
   val = foldr go (VFun . getElem) cs Map.empty
   getElem :: Map FName Val -> Val -> Val
-  getElem mp x = getVal mp' fwpin go' Map.! fwpin
-   where
-    cname :: CName
-    vs' :: [Val]
-    (cname, vs') = unVNamed x
-    mp' :: Map FName Val
-    mp' = foldr (uncurry Map.insert) mp $ zip vNames vs'
-    go' :: Exp
-    go' = foldl
-      (\acc (b, n) ->
-        EApp acc (if b then EApp (EVar fwpin) (EVar n) else EVar n)
-      )
-      (EVar cname) -- we get access to a function meant do deal with given constructor using the name of this constructor
-      (zip (iwcpsbrwfc Map.! cname) vNames)
-  -- fold with parameters inner name
-  fwpin :: FName
-  fwpin  = "__fold__"
-  vNames = fmap (('v' :) . show) [(1 :: Integer) ..]
+  getElem mp x =
+    let cname :: CName
+        vs' :: [Val]
+        (cname, vs') = unVNamed x
+    in  foldl (\acc (b, v) -> unVFun acc (if b then getElem mp v else v))
+              (mp Map.! cname)
+              (zip (iwcpsbrwfc cname) vs')
   go :: TConstr -> (Map CName Val -> Val) -> Map CName Val -> Val
   go (TConstr cname _) acc ms = VFun (\v -> acc (Map.insert cname v ms))
-
-getVal :: Map FName Val -> FName -> Exp -> Map FName Val
-getVal rho n e = let rho' = Map.insert n (go rho' e) rho in rho'
- where
-  go :: Map FName Val -> Exp -> Val
-  go rho' (EVar n'    ) = rho' Map.! n'
-  go rho' (EApp e1 e2) = unVFun (go rho' e1) $ go rho' e2
-  go _    (ELet _  _ ) = error "You cannot use let in here"

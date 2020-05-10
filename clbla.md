@@ -76,7 +76,7 @@ The language allows algebraic and functional types. To construct an functional t
 
 ### Types definitions
 
-Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of typs `c` and `A b c` and `E` with parameter `b` write:
+Each type must have at least one constructor. To define type `A` with parameters `b c` with constructors `D` with parameters of types `c` and `A b c` and `E` with parameter `b` write:
 
 ```haskell
 data A b c = D c (A b c) | E b
@@ -243,7 +243,7 @@ The `where <environment>` part is optional. Replace the `<environment>` with an 
 
 ### Build in functions
 
-There are 2 build in functions
+There are 2 build in functions.
 
 ```haskell
 s :: (a -> b -> c) -> (a -> b) -> a -> c

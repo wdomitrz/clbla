@@ -19,9 +19,12 @@ buildInsNamePrefix :: String
 buildInsNamePrefix = "_"
 buildInFunctions :: [(String, TVal)]
 buildInFunctions = [(sName, createS), (kName, createK)]
-addPrefixedNames :: [(String, a)] -> [(String, a)]
-addPrefixedNames =
-  foldr (\(name, x) -> ([(name, x), (buildInsNamePrefix ++ name, x)] ++)) []
+addPrefixedNames :: [(String, a)] -> [(FName, a)]
+addPrefixedNames = foldr
+  (\(name, x) ->
+    ([(Prefix name, x), (Prefix $ buildInsNamePrefix ++ name, x)] ++)
+  )
+  []
 
 addFunToEnv :: FName -> TVal -> Env -> Env
 addFunToEnv name tv = modifyFEnv (Map.insert name tv)

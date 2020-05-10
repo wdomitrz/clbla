@@ -3,6 +3,10 @@ import STD
 
 (<*>) :: (a -> b -> c) -> (a -> b) -> a -> c
 (<*>) = s
+ap :: (a -> b -> c) -> (a -> b) -> a -> c
+ap = s
+($) :: (a -> b) -> a -> b
+($) = i
 (.) :: (b -> c) -> (a -> b) -> a -> c
 (.) = b
 const :: a -> b -> a

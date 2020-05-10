@@ -62,5 +62,5 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    [fileName] -> showResult $ processFile fileName
+    [fileName] -> showResult $ processModule fileName (readFile fileName)
     _          -> usage

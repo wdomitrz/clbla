@@ -1,6 +1,5 @@
 -- This file is an attempt to write everything using folds, not eliminators
 {# LANGUAGE FOn #}
-{# LANGUAGE NElim #}
 
 import STD
 import HS

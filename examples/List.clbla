@@ -4,11 +4,11 @@ import HS
 
 data List a = a : (List a) | Nil
 
-rev :: List a -> List a
-rev = flip (foldList ((flip (.)) . (:)) id) Nil
-
 foldListL :: (a -> b -> a) -> a -> List b -> a
 foldListL = flip . ((.) (flip foldList id) ((.) ((.) (flip (.))) flip))
 
-rev' :: List a -> List a
-rev' = foldListL (flip (:)) Nil
+rev :: List a -> List a
+rev = foldListL (flip (:)) Nil
+
+main :: List (List (List a))
+main = rev (Nil : (Nil : Nil) : Nil)

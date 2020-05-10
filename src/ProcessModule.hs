@@ -128,9 +128,9 @@ procTDef t@(TDef name vs cs) = do
   mapM_ (\(TConstr _ ts) -> mapM_ (cvis vs) ts) cs
   mapM_ (addConstructor $ algTType t)           cs
   gets (enabled elimOff)
-    >>= flip unless (addFun (elimPrefix ++ name) $ createElim t)
+    >>= flip unless (addFun (Prefix (elimPrefix ++ name)) $ createElim t)
   gets (enabled foldOn)
-    >>= flip when (addFun (foldPrefix ++ name) $ createFold t)
+    >>= flip when (addFun (Prefix (foldPrefix ++ name)) $ createFold t)
 
 addConstructor :: Type -> TConstr -> InterpreterStateM ()
 addConstructor td c@(TConstr cname _) = addFun cname $ createContructor td c
@@ -157,7 +157,7 @@ addType name t = do
   modify (\rho -> rho { tenv = Map.insert name t $ tenv rho })
 
 checkIfFuctionNameIsUniqueLocal :: FName -> InterpreterStateM ()
-checkIfFuctionNameIsUniqueLocal  n =
+checkIfFuctionNameIsUniqueLocal n =
   gets localFunctions
     >>= (flip when (throwE $ FunRedeclaration n) . (n `Set.member`))
 

@@ -10,22 +10,20 @@ usage :: IO ()
 usage = do
   putStrLn $ unlines
     [ "usage: Call with one of the following argument combinations:"
-    , "  --help          Display this help message."
-    , "  (no arguments)  Parse stdin verbosely."
-    , "  (files)         Parse content of files verbosely."
-    , "  -s (files)      Silent mode. Parse content of files silently."
+    , "  (no arguments)  Read input from stdin,"
+    , "  (file)          Get file content."
     ]
   exitFailure
 
-mainFunction :: String
-mainFunction = "main"
+mainFunction :: FName
+mainFunction = Prefix "main"
 
 showResult :: IOWithInterpreterError Env -> IO ()
 showResult rhoEIO = do
   rhoE <- runExceptT rhoEIO
   case rhoE of
     Left e -> print e >> exitFailure
-    Right Env { localFunctions = lFunctions , fenv = rhoF } ->
+    Right Env { localFunctions = lFunctions, fenv = rhoF } ->
       if mainFunction `elem` lFunctions
         then case rhoF Map.! mainFunction of
           v@TVal{} -> print v
@@ -38,5 +36,5 @@ main = do
   args <- getArgs
   case args of
     []         -> showResult $ processModule "<stdin>" getContents
-    [fileName] -> showResult $ processFile fileName
+    [fileName] -> showResult $ processModule fileName (readFile fileName)
     _          -> usage
