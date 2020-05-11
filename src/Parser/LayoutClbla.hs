@@ -48,7 +48,7 @@ resolveLayout tp = res Nothing [if tl then Implicit 1 else Explicit]
     | isLayoutOpen t0 = moveAlong (Explicit:st) [t0] ts
 
   -- We are in an implicit layout block
-  res pt st@(Implicit n:ns) (t0:ts)
+  res pt (Implicit n:ns) (t0:ts)
 
       -- End of implicit block by a layout stop word
     | isStop t0 =
@@ -65,7 +65,7 @@ resolveLayout tp = res Nothing [if tl then Implicit 1 else Explicit]
         in moveAlong ns' ts1 ts2
 
     -- End of an implicit layout block
-    | newLine pt t0 && column t0 < n  = 
+    | newLine pt t0 && column t0 < n  =
            -- Insert a closing brace after the previous token.
        let b:t0':ts' = addToken (afterPrev pt) layoutClose (t0:ts)
            -- Repeat, with the current block removed from the stack
@@ -83,31 +83,31 @@ resolveLayout tp = res Nothing [if tl then Implicit 1 else Explicit]
                      -- insert an open brace after the layout word
                      b:ts' = addToken (nextPos t0) layoutOpen ts
                      -- save the start column
-                     st' = Implicit col:st 
+                     st' = Implicit col:st
                  in -- Do we have to insert an extra layoutSep?
                 case st of
                   Implicit n:_
                     | newLine pt t0 && column t0 == n
                       && not (isNothing pt ||
                               isTokenIn [layoutSep,layoutOpen] (fromJust pt)) ->
-                     let b':t0':b'':ts'' =
+                     let b':t0':b'':_ =
                            addToken (afterPrev pt) layoutSep (t0:b:ts')
                      in moveAlong st' [b',t0',b''] ts'
                   _ -> moveAlong st' [t0,b] ts'
 
     -- If we encounter a closing brace, exit the first explicit layout block.
-    | isLayoutClose t0 = 
+    | isLayoutClose t0 =
           let st' = drop 1 (dropWhile isImplicit st)
-           in if null st' 
-                 then error $ "Layout error: Found " ++ layoutClose ++ " at (" 
-                              ++ show (line t0) ++ "," ++ show (column t0) 
+           in if null st'
+                 then error $ "Layout error: Found " ++ layoutClose ++ " at ("
+                              ++ show (line t0) ++ "," ++ show (column t0)
                               ++ ") without an explicit layout block."
                  else moveAlong st' [t0] ts
 
   -- Insert separator if necessary.
-  res pt st@(Implicit n:ns) (t0:ts)
+  res pt st@(Implicit n:_) (t0:ts)
     -- Encounted a new line in an implicit layout block.
-    | newLine pt t0 && column t0 == n = 
+    | newLine pt t0 && column t0 == n =
        -- Insert a semicolon after the previous token.
        -- unless we are the beginning of the file,
        -- or the previous token is a semicolon or open brace.
