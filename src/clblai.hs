@@ -1,12 +1,15 @@
 import           System.Environment
+import           System.Exit
+import           System.IO
 import           Control.Monad.Except
+import           Control.Monad.State
+import qualified Data.Map                      as Map
 import           Parser.ErrM                    ( Err(..) )
 import           Parser.ParClbla                ( myLexer
                                                 , pProgramme
                                                 )
+import           Parser.LexClbla               as Lex
 import           Parser.LayoutClbla             ( resolveLayout )
-import           Control.Monad.State
-import           System.Exit
 import           ProcessModule                  ( evalTypeCheckDefs )
 import           Error
 import           ProcessFile
@@ -48,49 +51,77 @@ evalTypeOfM s expr = evalState
           , uniqueTId     = 1
           }
 
-interactiveModeHelp :: String
-interactiveModeHelp = unlines
+interactiveModeHelp :: IO ()
+interactiveModeHelp = hPutStrLn stderr $ unlines
   [ ":h                   Show this help,"
   , ":t (exp)             Show the type of the expression exp,"
   , ":v (variable name)   Show the value of the given variable,"
   , "otherwise            Try to evaluate the given value. You can use extensions, imports, type definitions and function definitions with declarations (use ;)."
   ]
 
-interactiveMode :: Env -> IO ()
-interactiveMode rho = interact (unlines . fmap go . lines)
+printErr :: Show a => a -> IO ()
+printErr = hPrint stderr
+
+putStrLnErr :: String -> IO ()
+putStrLnErr = hPutStrLn stderr
+
+toFName :: String -> Maybe FName
+toFName s = foldr go Nothing $ myLexer s
  where
-  go :: String -> String
-  go (':' : 'h' : _) = interactiveModeHelp
-  go (':' : 't' : ' ' : s) =
+  go :: Lex.Token -> Maybe FName -> Maybe FName
+  go _                               x@(Just _) = x
+  go (PT _ (Lex.T_UIdent         n)) Nothing    = Just $ Prefix n
+  go (PT _ (Lex.T_LIdent         n)) Nothing    = Just $ Prefix n
+  go (PT _ (T_InfixFunctionNameA n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameB n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameC n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameD n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameE n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameF n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameG n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameH n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameI n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameJ n)) Nothing    = Just $ Infix n
+  go (PT _ (T_InfixFunctionNameK n)) Nothing    = Just $ Infix n
+  go _                               Nothing    = Nothing
+
+interactiveMode :: Env -> IO ()
+interactiveMode rho = getContents >>= (foldM_ go rho . lines)
+ where
+  go :: Env -> String -> IO Env
+  go rho' (':'       : 'h' : _) = interactiveModeHelp >> return rho'
+  go rho' (':' : 't' : ' ' : s) = do
     case pExp (interactiveModeExpressionName ++ " = " ++ s) of
       Ok expr -> case evalTypeOfM rho expr of
-        Left  e -> show e
-        Right t -> show t
-      Bad e -> show $ ParserError e
-  go (':' : 'v' : ' ' : s) = undefined
-  go s                     = undefined
+        Left  e -> printErr e
+        Right t -> print t
+      Bad e -> printErr e
+    return rho'
+  go rho' (':' : 'v' : ' ' : s) = do
+    let rhoF' = fenv rho'
+    case toFName s of
+      Nothing -> putStrLnErr $ "Invalid name `" ++ s ++ "`."
+      Just n  -> case n `Map.lookup` rhoF' of
+        Nothing ->
+          putStrLnErr $ "No variable `" ++ show n ++ "` in the environment."
+        Just v -> print v
+    return rho'
+  go rho' s =
+    printErr "This functionality is not implemented yet." >> return rho'
 
 moduleLoadingError :: InterpreterError -> IO ()
 moduleLoadingError e =
-  print
+  putStrLnErr
     $  "Module loading failed, starting in a default environment. The error: "
     ++ show e
 
-showResult :: IOWithInterpreterError Env -> IO ()
-showResult rhoEIO = do
+runInterperter :: IOWithInterpreterError Env -> IO ()
+runInterperter rhoEIO = do
   rhoE <- runExceptT rhoEIO
   rho  <- case rhoE of
     Left  e         -> moduleLoadingError e >> return (baseEnv [])
     Right rho@Env{} -> return rho
   interactiveMode rho
-
-runInterperter :: IOWithInterpreterError Env -> IO ()
-runInterperter rhoEIO = do
-  rhoE <- runExceptT rhoEIO
-  case rhoE of
-    Left  e         -> print e >> exitFailure
-    Right rho@Env{} -> interactiveMode rho
-  undefined
 
 main :: IO ()
 main = do

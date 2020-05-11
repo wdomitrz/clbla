@@ -10,7 +10,7 @@ instance Show Val where
     | null vs = showString name
     | otherwise = showParen
       (d > 1)
-      (showString name . showString " " . foldr
+      (showString name . showString " " . foldl
         (\acc -> ((acc . showString " ") .))
         (showsPrec 2 $ head vs)
         (showsPrec 2 <$> tail vs)
@@ -47,7 +47,10 @@ data Env = Env {exts :: [Ext], localTypes :: Set TName,
   deriving Show
 
 data PIName = Prefix String | Infix String
-  deriving (Eq, Ord, Show, Read)
+  deriving (Eq, Ord, Read)
+instance Show PIName where
+  show (Prefix n) = n
+  show (Infix  n) = "(" ++ n ++ ")"
 
 type VName = String -- type variable name
 type MName = String -- module name
@@ -70,7 +73,7 @@ instance Show Type where
     | null ts = showString name
     | otherwise = showParen
       (d > 1)
-      (showString name . showString " " . foldr
+      (showString name . showString " " . foldl
         (\acc -> ((acc . showString " ") .))
         (showsPrec 2 $ head ts)
         (showsPrec 2 <$> tail ts)
