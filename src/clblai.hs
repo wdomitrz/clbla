@@ -106,7 +106,7 @@ interactiveMode rho = getContents >>= (foldM_ go rho . lines)
           putStrLnErr $ "No variable `" ++ show n ++ "` in the environment."
         Just v -> print v
     return rho'
-  go rho' s =
+  go rho' _ =
     printErr "This functionality is not implemented yet." >> return rho'
 
 moduleLoadingError :: InterpreterError -> IO ()
