@@ -74,10 +74,3 @@ combineEnvs Env { localFunctions = lFunctions', tenv = rhoT', fenv = rhoF' } =
   goT rhoT (k', v') = case k' `Map.lookup` rhoT of
     Just v -> unless (v == v') (throwE $ ModuleTypesConflictingDectariation k')
     _      -> return ()
-
-combineEnvsForInteractive :: Env -> InterpreterStateM Env
-combineEnvsForInteractive Env { exts = exts', tenv = rhoT', fenv = rhoF' } = do
-  modify (modifyExts (exts' ++))
-  modify (modifyTEnv (Map.union rhoT'))
-  modify (modifyFEnv (Map.union rhoF'))
-  get

@@ -61,7 +61,8 @@ type Ext = String -- extension
 type Imp = String -- import
 type TId = Integer -- type variable id
 
-data Module = Module MName [Ext] [Imp] Defs
+data Module = Module {moduleName :: MName, mexts :: [Ext] ,
+                      mimps :: [Imp], mdefs :: Defs}
   deriving (Eq, Ord, Show, Read)
 
 data Type = TPoly VName | TVar TId | TNamed TName [Type] | Type :-> Type

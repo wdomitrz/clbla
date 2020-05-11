@@ -15,10 +15,10 @@ import           ProcessModule
 parse :: FilePath -> String -> Parser.ErrM.Err Module
 parse fn = (procModule fn <$>) . pProgramme . resolveLayout True . myLexer
 
-interpretModule :: Module -> IOWithInterpreterError Env
-interpretModule (Module mname exts' imps defs) = do
+interpretModuleIn :: (Module -> Env) -> Module -> IOWithInterpreterError Env
+interpretModuleIn inWhat m@(Module mname _ imps defs) = do
   envs <- mapM processFile imps
-  case evalState (runExceptT $ go envs) (baseEnv exts') of
+  case evalState (runExceptT $ go envs) (inWhat m) of
     Left  e -> throwE $ ErrorInModule mname e
     Right x -> return x
  where
@@ -27,12 +27,12 @@ interpretModule (Module mname exts' imps defs) = do
     mapM_ combineEnvs envs
     typeCheckAndProcDefs defs
 
-interpretModuleInteractive :: Env -> Module -> IOWithInterpreterError Env
-interpretModuleInteractive rho m = do
-  rho' <- interpretModule m
-  case evalState (runExceptT $ combineEnvsForInteractive rho') rho of
-    Left  e -> throwE e
-    Right x -> return x
+interpretModule :: Module -> IOWithInterpreterError Env
+interpretModule = interpretModuleIn (baseEnv . mexts)
+
+interpretModuleInEnv :: Env -> Module -> IOWithInterpreterError Env
+interpretModuleInEnv rho =
+  interpretModuleIn (\m -> modifyExts (mexts m ++) rho)
 
 parseModule :: MName -> IO String -> IOWithInterpreterError Module
 parseModule mName fileContentIO = ExceptT $ do
@@ -43,6 +43,10 @@ parseModule mName fileContentIO = ExceptT $ do
 
 processFile :: FilePath -> IOWithInterpreterError Env
 processFile fp = processModule fp $ readFile (fp ++ ".clbla")
+
+processModuleInEnv :: Env -> MName -> IO String -> IOWithInterpreterError Env
+processModuleInEnv rho mName mContentIO =
+  parseModule mName mContentIO >>= interpretModuleInEnv rho
 
 processModule :: MName -> IO String -> IOWithInterpreterError Env
 processModule mName mContentIO =
