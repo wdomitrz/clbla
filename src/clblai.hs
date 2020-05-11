@@ -92,7 +92,7 @@ interactiveMode rho = getContents >>= (foldM_ go rho . lines)
   go rho' (':'       : 'h' : _) = interactiveModeHelp >> return rho'
   go rho' (':' : 't' : ' ' : s) = do
     case pExp (interactiveModeExpressionName ++ " = " ++ s) of
-      Ok expr -> case evalTypeOfM rho expr of
+      Ok expr -> case evalTypeOfM rho' expr of
         Left  e -> printErr e
         Right t -> print t
       Bad e -> printErr e
