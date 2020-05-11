@@ -1,0 +1,6 @@
+-- Function a is redeclared in the same module
+a :: a -> a
+a = s k k
+
+a :: a -> b -> a
+a = k

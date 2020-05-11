@@ -1,0 +1,17 @@
+i :: a -> a
+i = s k k
+
+w :: (a -> a -> b) -> a -> b
+w = s s (k i)
+
+b :: (b -> c) -> (a -> b) -> a -> c
+b = s (k s) k
+
+c :: (a -> b -> c) -> b -> a -> c
+c = s (b b s) (k k)
+
+b' :: (a -> b) -> (b -> c) -> a -> c
+b' = c b
+
+lift2 :: (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+lift2 = b (b w `b` c (b `b` b')) `b` b

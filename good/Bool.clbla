@@ -1,0 +1,19 @@
+import STD
+
+data Bool = True | False
+
+if :: Bool -> a -> a -> a
+if = c (b c elimBool)
+
+not :: Bool -> Bool
+not = elimBool False True
+
+and :: Bool -> Bool -> Bool
+and = c elimBool False
+(&&) :: Bool -> Bool -> Bool
+(&&) = and
+
+or :: Bool -> Bool -> Bool
+or = (b not) `b` ((b' not) `b` (and `b` not))
+(||) :: Bool -> Bool -> Bool
+(||) = or

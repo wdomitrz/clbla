@@ -1,0 +1,4 @@
+data A = B
+
+-- Function B (constructor) is redeclared
+data C = B

@@ -1,0 +1,8 @@
+data A = B
+data C = D
+
+iA :: A -> A
+iA = s k k
+
+x :: C
+x = iA D

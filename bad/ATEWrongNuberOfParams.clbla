@@ -1,0 +1,4 @@
+-- Wrong number of parameters of a type parameter B in the declaration of type A
+data A b = C (B b b)
+
+data B a b c = D a b c | E c a

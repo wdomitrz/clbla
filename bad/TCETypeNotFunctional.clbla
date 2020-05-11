@@ -1,0 +1,4 @@
+data A = B
+
+x :: a -> b
+x = B

@@ -14,6 +14,7 @@ data InterpreterError =
   | ATEWrongNuberOfParams TName
   | FunConflictingDeclarations FName
   | FunDefinitionWithoutDeclaration FName
+  | FunConflictingDefinitions FName
   | ModuleTypesConflictingDectariation TName
   | ErrorInModule MName InterpreterError
   | TCEInfiniteType Type Type
@@ -37,6 +38,8 @@ instance Show InterpreterError where
     "Conflicting declarations of a function `" ++ show f ++ "`."
   show (FunDefinitionWithoutDeclaration f) =
     "Function `" ++ show f ++ "` defined, but not declared."
+  show (FunConflictingDefinitions f) =
+    "Conflicting definitions of function `" ++ show f ++ "`."
   show (ModuleTypesConflictingDectariation t) =
     "Conflicting declarations of type `" ++ t ++ "` in imported modules."
   show (ErrorInModule m e) = "Error in module `" ++ m ++ "`:\n" ++ show e

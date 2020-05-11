@@ -1,0 +1,16 @@
+import HS
+import List
+import Nats
+
+-- Take at most n elements from list xs
+take :: Nat -> List a -> List a
+take = flip (flip elimNat Nil . flip (flip elimList Nil . flip ((.) . (:)) . take))
+
+nats :: List Nat
+nats = go Zero
+  where
+    go :: Nat -> List Nat
+    go = ap (:) (go . S)
+
+main :: List Nat
+main = take (four + two) nats

@@ -1,0 +1,10 @@
+import STD
+import HS
+import List
+
+data AlternatingList a b = a :. (AlternatingList b a) | ANil
+
+everySecond :: AlternatingList a b -> List a
+everySecond = elimAlternatingList ((c (.) go) . (:)) Nil
+    where go :: AlternatingList b a -> List a
+          go = elimAlternatingList (k everySecond) Nil

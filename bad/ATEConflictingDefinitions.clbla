@@ -1,0 +1,2 @@
+-- conflicting definitions of type variable a for an algebraic types
+data A a b a = B

@@ -1,0 +1,19 @@
+import STD
+
+
+(<*>) :: (a -> b -> c) -> (a -> b) -> a -> c
+(<*>) = s
+ap :: (a -> b -> c) -> (a -> b) -> a -> c
+ap = s
+($) :: (a -> b) -> a -> b
+($) = i
+(.) :: (b -> c) -> (a -> b) -> a -> c
+(.) = b
+const :: a -> b -> a
+const = k
+flip :: (a -> b -> c) -> b -> a -> c
+flip = c
+id :: a -> a
+id = i
+liftM2 :: (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+liftM2 = lift2

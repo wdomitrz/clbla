@@ -1,0 +1,12 @@
+import STD
+
+data Pair a b = Pair a b
+
+(<>) :: a -> b -> Pair a b
+(<>) = Pair
+
+fst :: Pair a b -> a
+fst = elimPair k
+
+snd :: Pair a b -> b
+snd = elimPair (c k)

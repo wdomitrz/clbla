@@ -31,9 +31,17 @@ procDefsInitial (Defs tdfs fdcls _) = do
   mapM_ procTDef  tdfs
   mapM_ procFDecl fdcls
 
+areFDefsAllUnique :: [FDef] -> InterpreterStateM ()
+areFDefsAllUnique = foldM_ go [] . fmap fname
+ where
+  go :: [FName] -> FName -> InterpreterStateM [FName]
+  go fns fn = when (fn `elem` fns) (throwE $ FunConflictingDefinitions fn)
+    >> return (fn : fns)
+
 typeCheckDefs :: Defs -> InterpreterStateM TEnv
 typeCheckDefs dfs@(Defs _ _ fdfs) = do
   procDefsInitial dfs
+  areFDefsAllUnique fdfs
   mapM_ typeCheckFDef fdfs
   gets (fmap onlyType . fenv)
 
@@ -43,6 +51,7 @@ procDefs dfs@(Defs _ _ fdfs) = procDefsInitial dfs >> procFDefs fdfs
 typeCheckAndProcDefs :: Defs -> InterpreterStateM Env
 typeCheckAndProcDefs dfs@(Defs _ _ fdfs) = do
   procDefsInitial dfs
+  areFDefsAllUnique fdfs
   mapM_ typeCheckFDef fdfs
   procFDefs fdfs
 
