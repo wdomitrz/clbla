@@ -1,2 +1,0 @@
--- Type variable `a` is not in scope
-data A b = B b | C a b

@@ -1,5 +1,0 @@
-data A = B
-
--- elimA is redeclared in the same module
-elimA :: a -> a
-elimA = s k k

@@ -1,3 +1,0 @@
--- A type is redeclared
-data A = B
-data A a = C a | D (A a)
