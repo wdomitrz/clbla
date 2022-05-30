@@ -68,7 +68,7 @@ All declared functions should be defined. The declarations and definitions order
 
 ## Types
 
-The language allows algebraic and functional types. To construct an functional type use `->`. For example `a -> a` is a type of the identity function.
+The language allows algebraic and functional types. To construct a functional type use `->`. For example `a -> a` is a type of the identity function.
 
 ### Types definitions
 
@@ -237,7 +237,7 @@ To define a function write:
 
 The `where <environment>` part is optional. Replace the `<environment>` with an environment definition. The `<expression>` will be evaluated in this environment.
 
-### Build in functions
+### Build-in functions
 
 There are 2 build in functions.
 
